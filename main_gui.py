@@ -1,228 +1,334 @@
-# import playsound
 import tkinter
 import tkinter.filedialog
-import os
+import tkinter.messagebox
 import pygame
+import os
 import keyboard
+import json
+import webbrowser
 from modules.audio import SoundMusic, BackgroundMusic
-from math import sqrt
 
+
+__version__ = 2.0
 
 FONT = ('Helvetica', '10')
-# BTN_FONT = ('Helvetica', '15')
-LENGTH = 30
+NUMBER_OF_BUTTONS = 9
+sounds_list = [None for _ in range(NUMBER_OF_BUTTONS)]
 
-BUTTONS_NR = 9
+open_img_path = "images/folder-2x.png"
+stop_img_path = "images/media-stop-2x.png"
+pause_img_path = "images/media-pause-2x.png"
+play_img_path = "images/media-play-2x.png"
 
-
-sounds_lst = [None for _ in range(BUTTONS_NR)]
-
-
-def open_file(num):
-    initial_directory = os.path.join('sounds')
-    title = "Select A File"
-    file_types = [('wav files', '*.wav'), ('All files', '*.*')]
-    file_path = tkinter.filedialog.askopenfilename(
-        initialdir=initial_directory, title=title, filetypes=file_types)
-    if file_path:
-        sounds_lst[num] = SoundMusic(file_path)
-        _lbl_update(num, file_path)
-        _btn_update(num, file_path)
-        hotkey = f"{num+1}"
-        keyboard.add_hotkey(hotkey, lambda: play_file(num))
+github = "https://github.com/ajwalkiewicz/sound-pad"
 
 
-def play_file(num):
-    sound_file = sounds_lst[num]
-    if isinstance(sound_file, SoundMusic):
-        sound_file.play()
+class Button(tkinter.Button):
+
+    def __init__(self, master=None):
+        super().__init__(master)
+        self["width"] = 25
+        self["height"] = 25
+        self["font"] = FONT
 
 
-def stop_file(num):
-    sound_file = sounds_lst[num]
-    if isinstance(sound_file, SoundMusic):
-        sound_file.stop()
-
-
-def _lbl_update(num, text):
-    global file_names
-    global right_middle_frame
-    lbl_text = os.path.split(text)[1][:LENGTH]
-    file_names[num].set(lbl_text)
-    right_middle_frame.update_idletasks()
-
-
-def _btn_update(num, text):
-    global buttons_values_list
-    global left_frame
-    btn_text = os.path.split(text)[1][:LENGTH]
-    buttons_values_list[num].set(btn_text)
-    left_frame.update_idletasks()
-
-
-def pause_file(num):
-    pass
-
-
-def open_project():
-    pass
-
-
-def save_project():
-    pass
-
-
-def apply_changes():
-    pass
-
-
-def main():
-    global file_names
-    global buttons_values_list
-    global right_middle_frame
-    global left_frame
-    global buttons_list
-
-    pygame.mixer.init()
-    # Tkinter
-    root = tkinter.Tk()
-    root.title('Sound Pad')
-    root.resizable(width=0, height=0)
-
-    # Images
-    play_img = tkinter.PhotoImage(file="images/play.png")
-    stop_img = tkinter.PhotoImage(file="images/stop.png")
-    pause_img = tkinter.PhotoImage(file="images/pause.png")
-
-    # Creating frames
-    left_frame = tkinter.LabelFrame(root)
-    right_frame = tkinter.LabelFrame(root)
-    # frm_right_up = tkinter.LabelFrame(right_frame)
-    right_middle_frame = tkinter.LabelFrame(right_frame)
-    right_down_frame = tkinter.LabelFrame(right_frame)
-
-    left_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
-    right_frame.grid(row=0, column=1, sticky=tkinter.NSEW)
-    # frm_right_up.grid(row=0, column=0, sticky=tkinter.NSEW)
-    right_middle_frame.grid(row=1, column=0, sticky=tkinter.NSEW)
-    right_down_frame.grid(row=2, column=0, sticky=tkinter.NSEW)
-
-    # Initializiny 9 buttons in given panel (frame object)
-    BUTTONS_VALUES = [
-        [(tkinter.StringVar(), 7), (tkinter.StringVar(), 8), (tkinter.StringVar(), 9)],
-        [(tkinter.StringVar(), 4), (tkinter.StringVar(), 5), (tkinter.StringVar(), 6)],
-        [(tkinter.StringVar(), 1), (tkinter.StringVar(), 2), (tkinter.StringVar(), 3)]
-    ]
-
-    buttons_values_list = [
-        BUTTONS_VALUES[2][0][0],
-        BUTTONS_VALUES[2][1][0],
-        BUTTONS_VALUES[2][2][0],
-        BUTTONS_VALUES[1][0][0],
-        BUTTONS_VALUES[1][1][0],
-        BUTTONS_VALUES[1][2][0],
-        BUTTONS_VALUES[0][0][0],
-        BUTTONS_VALUES[0][1][0],
-        BUTTONS_VALUES[0][2][0],
-    ]
-
-    BUTTONS_VALUES[0][0][0].set(7),
-    BUTTONS_VALUES[0][1][0].set(8),
-    BUTTONS_VALUES[0][2][0].set(9),
-    BUTTONS_VALUES[1][0][0].set(4),
-    BUTTONS_VALUES[1][1][0].set(5),
-    BUTTONS_VALUES[1][2][0].set(6),
-    BUTTONS_VALUES[2][0][0].set(1),
-    BUTTONS_VALUES[2][1][0].set(2),
-    BUTTONS_VALUES[2][2][0].set(3)
-
+class PadButton(Button):
     buttons_list = []
-    for row, values in enumerate(BUTTONS_VALUES):
-        for col, val in enumerate(values):
-            button = tkinter.Button(left_frame, width=20, height=10, textvariable=val[0],
-                                    command=lambda i=val[1]-1: play_file(i))
-            button.grid(row=row, column=col, sticky=tkinter.NSEW)
-            buttons_list.append(button)
 
-    # Create No. lables
-    for no in range(BUTTONS_NR):
-        lbl = tkinter.Label(right_middle_frame, text=f"{no+1}. ", font=FONT)
-        lbl.grid(row=no+1, column=0, sticky=tkinter.NSEW)
+    def __init__(self, master=None, nr=None):
+        super().__init__(master)
+        self.master = master
+        self.nr = len(self.buttons_list)
+        self.state = True
+        self["width"] = 20
+        self["height"] = 10
+        self["command"] = self.play_stop
+        self["text"] = str(nr)
+        PadButton.buttons_list.append(self)
+        # self._button_list_sort()
 
-    # Create file names lables
-    file_names = [tkinter.StringVar() for _ in range(BUTTONS_NR)]
-    for var in file_names:
-        var.set("  "*LENGTH)
+    def play_stop(self):
+        if isinstance(sounds_list[self.nr], BackgroundMusic):
+            if self.state:
+                sounds_list[self.nr].play()
+                self.state = False
+            else:
+                sounds_list[self.nr].stop()
+                self.state = True
 
-    for row, text in enumerate(file_names):
-        tkinter.Label(right_middle_frame, textvariable=text, background='white', anchor=tkinter.W, font=FONT).grid(
-            row=row+1, column=1, sticky=tkinter.NSEW)
+        if isinstance(sounds_list[self.nr], SoundMusic):
+            sounds_list[self.nr].play()
 
-    # Create Radio buttons
-    values = [tkinter.StringVar() for _ in range(BUTTONS_NR)]
-    for _ in values:
-        _.set(0)
-    modes = ['sound', 'music']
+    # def _button_list_sort(self):
+    #     """Setting buttons in a right order.
+    #     From this order: [0,1,2,3,4,5,6,7,8]
+    #     To this order:   [6,7,8,3,4,5,0,1,2]"""
+    #     if len(self.buttons_list) == NUMBER_OF_BUTTONS:
+    #         self.buttons_list[0], self.buttons_list[6] = self.buttons_list[6], self.buttons_list[0]
+    #         self.buttons_list[1], self.buttons_list[7] = self.buttons_list[7], self.buttons_list[1]
+    #         self.buttons_list[2], self.buttons_list[8] = self.buttons_list[8], self.buttons_list[2]
 
-    for row, var in enumerate(values):
-        for val, mode in enumerate(modes):
-            tkinter.Radiobutton(right_middle_frame, variable=var,
-                                value=val, text=mode).grid(row=row+1, column=val+2)
 
-    # Create Check Buttons
-    cbtns = [
-        tkinter.Checkbutton(right_middle_frame) for i in range(BUTTONS_NR)
+class OpenButton(Button):
+    buttons_list = []
+    key_assigment = {
+        1: "7", 2: "8", 3: "9",
+        4: "4", 5: "5", 6: "6",
+        7: "1", 8: "2", 9: "3"
+    }
+
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self.nr = len(self.buttons_list)
+        self["text"] = "Open"
+        self["width"] = 25
+        self["command"] = self.open_file
+        icon = tkinter.PhotoImage(file=open_img_path)
+        self["image"] = icon
+        self.image = icon
+        self.file_path = None
+        OpenButton.buttons_list.append(self)
+
+    def open_file(self):
+        initial_directory = os.path.join('sounds')
+        title = "Select A File"
+        file_types = [('wav files', '*.wav')]
+        self.file_path = tkinter.filedialog.askopenfilename(
+            initialdir=initial_directory, title=title, filetypes=file_types)
+        if self.file_path:
+            sounds_list[self.nr] = SoundMusic(self.file_path)
+            hotkey = self.key_assigment.get(self.nr+1, "0")
+            keyboard.add_hotkey(hotkey, lambda: sounds_list[self.nr].play())
+            pad_button_text = os.path.split(self.file_path)[1]
+            PadButton.buttons_list[self.nr].config(text=pad_button_text)
+
+
+class StopButton(Button):
+    buttons_list = []
+
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self.nr = len(self.buttons_list)
+        self["text"] = "Stop"
+        # self["width"] = 10
+        self["command"] = self.stop_file
+        icon = tkinter.PhotoImage(file=stop_img_path)
+        self["image"] = icon
+        self.image = icon
+        self.buttons_list.append(self)
+
+    def stop_file(self):
+        if isinstance(sounds_list[self.nr], SoundMusic):
+            sounds_list[self.nr].stop()
+
+
+class PauseButton(Button):
+    buttons_list = []
+
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self.nr = len(self.buttons_list)
+        self["text"] = "Pause"
+        self["command"] = self.pause
+        icon = tkinter.PhotoImage(file=pause_img_path)
+        self["image"] = icon
+        self.image = icon
+        self.buttons_list.append(self)
+
+    def pause(self):
+        if isinstance(sounds_list[self.nr], BackgroundMusic):
+            sounds_list[self.nr].pause()
+
+
+class PlayButton(Button):
+    buttons_list = []
+
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self.nr = len(self.buttons_list)
+        self["text"] = "Play"
+        self["command"] = self.play
+        icon = tkinter.PhotoImage(file=play_img_path)
+        self["image"] = icon
+        self.image = icon
+        self.buttons_list.append(self)
+
+    def play(self):
+        if isinstance(sounds_list[self.nr], BackgroundMusic) or isinstance(sounds_list[self.nr], SoundMusic):
+            sounds_list[self.nr].play()
+
+
+class SaveProjectButton(Button):
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self["text"] = "Save Project"
+        self["command"] = self.save_project
+
+    @staticmethod
+    def save_project():
+        config = {}
+        for key, button in enumerate(OpenButton.buttons_list):
+            config.update({key: button.file_path})
+
+        initial_directory = os.path.join('.')
+        title = "Save Project"
+        file_types = [('json files', '*.json'), ("All Files", "*.*")]
+        try:
+            save_file = tkinter.filedialog.asksaveasfile(
+                mode="w", initialdir=initial_directory, title=title, filetypes=file_types, defaultextension=".json")
+            json.dump(config, save_file)
+            save_file.close()
+        except PermissionError:
+            print("Permission denied")
+
+
+class OpenProjectButton(Button):
+    def __init__(self, frame=None):
+        super().__init__(frame)
+        self.frame = frame
+        self["text"] = "Open Project"
+        self["command"] = self.open_project
+
+    @staticmethod
+    def open_project():
+        initial_directory = os.path.join('.')
+        title = "Select Project"
+        file_types = [('json files', '*.json'), ("All Files", "*.*")]
+        file_path = tkinter.filedialog.askopenfilename(
+            initialdir=initial_directory, title=title, filetypes=file_types)
+        if file_path:
+            if keyboard._hotkeys:
+                keyboard.remove_all_hotkeys()
+            for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
+                PadButton.buttons_list[position].config(text=str(text))
+                sounds_list[position] = None
+            with open(file_path, "r") as read_file:
+                data = json.loads(read_file.read())
+                files_not_found_list = []
+                for key, item in data.items():
+                    if item is not None:
+                        try:
+                            sounds_list[int(key)] = SoundMusic(item)
+                            pad_button_text = os.path.split(item)[1]
+                            hotkey = OpenButton.key_assigment.get(
+                                int(key)+1, "0")
+                            keyboard.add_hotkey(
+                                hotkey, lambda key=int(key): sounds_list[key].play())
+                            PadButton.buttons_list[int(key)].config(
+                                text=pad_button_text)
+                        except FileNotFoundError:
+                            files_not_found_list.append(item)
+            if files_not_found_list:
+                message = "Could not find following files: \n"
+                for text in files_not_found_list:
+                    message += f"\n{text}"
+                tkinter.messagebox.showerror(
+                    title="Missing Files", message=message)
+
+# Get rid of Menu classes, and put them in a AppWindow
+# To much unnecessary code
+
+
+class MenuBar(tkinter.Menu):
+    def __init__(self):
+        tkinter.Menu.__init__(self)
+        self.create_file_menu()
+
+    def create_file_menu(self):
+        self.add_cascade(label="File", menu=File())
+        self.add_cascade(label="Help", menu=Help())
+
+
+class File(MenuBar):
+    file_list = []
+
+    def __init__(self):
+        tkinter.Menu.__init__(self, tearoff=0)
+        self.file_menu()
+        self.file_list.append(self)
+
+    def file_menu(self):
+        self.add_command(label="Open Project",
+                         command=OpenProjectButton.open_project)
+        self.add_command(label="Save Project",
+                         command=SaveProjectButton.save_project)
+        self.add_separator()
+
+
+class Help(MenuBar):
+    def __init__(self):
+        tkinter.Menu.__init__(self, tearoff=0)
+        self.help_menu()
+
+    def help_menu(self):
+        self.add_command(label="Help")
+        self.add_command(label="More info",
+                         command=lambda: webbrowser.open_new_tab(github))
+
+
+class ButtonFrame(tkinter.Frame):
+    BUTTONS_VALUES = [
+        (1, [(1, 7), (6, 8), (10, 9)]),
+        (3, [(1, 4), (6, 5), (10, 6)]),
+        (5, [(1, 1), (6, 2), (10, 3)])
     ]
-    for row, btn in enumerate(cbtns):
-        btn.grid(row=row+1, column=4, sticky=tkinter.NSEW)
 
-    # Create Open File Buttons
-    btns_open_file = [
-        tkinter.Button(right_middle_frame, text="Open File", font=FONT, command=lambda i=i: open_file(i)) for i in range(BUTTONS_NR)
-    ]
-    for row, btn in enumerate(btns_open_file):
-        btn.grid(row=row+1, column=5, sticky=tkinter.NSEW)
+    def __init__(self, master=None):
+        tkinter.Frame.__init__(self, master)
+        self.master = master
+        self.create_buttons()
 
-     # Create Play Buttons
-    btns_play = [
-        tkinter.Button(right_middle_frame, text="Play", image=play_img, width=25, font=FONT, command=lambda i=i: play_file(i)) for i in range(BUTTONS_NR)
-    ]
-    for row, btn in enumerate(btns_play):
-        btn.grid(row=row+1, column=8, sticky=tkinter.NSEW)
+    def create_buttons(self):
+        for row, values in self.BUTTONS_VALUES:
+            for col, val in values:
+                button = PadButton(self, val)
+                button.grid(row=row, column=col,
+                            columnspan=4, sticky=tkinter.NSEW)
 
-    # Create Stop Buttons
-    btns_stop = [
-        tkinter.Button(right_middle_frame, text="Stop", image=stop_img, font=FONT, width=25, command=lambda i=i: stop_file(i)) for i in range(BUTTONS_NR)
-    ]
-    for row, btn in enumerate(btns_stop):
-        btn.grid(row=row+1, column=6, sticky=tkinter.NSEW)
+                btn = OpenButton(self)
+                btn.grid(row=row+1, column=col, sticky=tkinter.NSEW)
 
-     # Create Pause Buttons
-    btns_pause = [
-        tkinter.Button(right_middle_frame, text="Pause", image=pause_img, width=25, font=FONT, command=lambda i=i: pause_file(i)) for i in range(BUTTONS_NR)
-    ]
-    for row, btn in enumerate(btns_pause):
-        btn.grid(row=row+1, column=7, sticky=tkinter.NSEW)
+                stop_btn = StopButton(self)
+                stop_btn.grid(row=row+1, column=col+1, sticky=tkinter.NSEW)
 
-    # lbl_info = tkinter.Label(
-    #     frm_right_up, text="Informaciones", width=50, height=4)
-    # lbl_info.grid(row=0, column=0, sticky=tkinter.NSEW)
+                pause_btn = PauseButton(self)
+                pause_btn.grid(row=row+1, column=col+2, sticky=tkinter.NSEW)
 
-    # Settings
-    btn_apply = tkinter.Button(
-        right_down_frame, text="Apply", font=FONT)
-    btn_open_project = tkinter.Button(
-        right_down_frame, text="Open Project", font=FONT)
-    btn_save_project = tkinter.Button(
-        right_down_frame, text="Save Project", font=FONT)
+                play_btn = PlayButton(self)
+                play_btn.grid(row=row+1, column=col+3, sticky=tkinter.NSEW)
 
-    btn_apply.grid(row=0, column=2, sticky=tkinter.NSEW)
-    btn_open_project.grid(row=0, column=0, sticky=tkinter.NSEW)
-    btn_save_project.grid(row=0, column=1, sticky=tkinter.NSEW)
 
-    root.mainloop()
-    pygame.QUIT
+class SettingsFrame(tkinter.Frame):
+    def __init__(self, master=None):
+        tkinter.Frame.__init__(self, master)
+        self.master = master
+        # self.create_buttons()
+
+    def create_buttons(self):
+        SaveProjectButton(self).grid(row=0)
+        OpenProjectButton(self).grid(row=1)
+
+
+class AppWindow(tkinter.Tk):
+    def __init__(self, *args, **kwargs):
+        tkinter.Tk.__init__(self, *args, **kwargs)
+        self.title("Sound Pad")
+        self.button_frame = ButtonFrame(self)
+        self.button_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
+        # self.settings_frame = SettingsFrame(self)
+        # self.settings_frame.grid(row=0, column=1, sticky=tkinter.NSEW)
+        self.filemenu = MenuBar()
+        # To change
+        File.file_list[0].add_command(label="Exit", command=self.destroy)
+        self.config(menu=self.filemenu)
 
 
 if __name__ == "__main__":
-    main()
+    pygame.mixer.init()
+    app = AppWindow()
+    app.mainloop()

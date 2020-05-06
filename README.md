@@ -31,6 +31,7 @@ This section will be updated soon
 * [Pygame](https://www.pygame.org/docs/) - set of Python modules designed for writing video games
 * [Tkinter](https://docs.python.org/3/library/tk.html) - Python module for GUI
 * [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control
+* [Open Iconic v1.1.1](https://github.com/iconic/open-iconic) - open source sibling of Iconic
 
 ## Authors
 

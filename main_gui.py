@@ -4,7 +4,7 @@ import tkinter.filedialog
 import os
 import pygame
 import keyboard
-from modules.audio import SoundMusic
+from modules.audio import SoundMusic, BackgroundMusic
 from math import sqrt
 
 
@@ -21,9 +21,9 @@ sounds_lst = [None for _ in range(BUTTONS_NR)]
 def open_file(num):
     initial_directory = os.path.join('sounds')
     title = "Select A File"
-    file_types = (('wav files', '*.wav'), ('All files', '*.*'))
+    file_types = [('wav files', '*.wav'), ('All files', '*.*')]
     file_path = tkinter.filedialog.askopenfilename(
-        initialdir=initial_directory, title=title, filetype=file_types)
+        initialdir=initial_directory, title=title, filetypes=file_types)
     if file_path:
         sounds_lst[num] = SoundMusic(file_path)
         _lbl_update(num, file_path)
@@ -81,8 +81,9 @@ def main():
     global buttons_values_list
     global right_middle_frame
     global left_frame
+    global buttons_list
 
-    pygame.init()
+    pygame.mixer.init()
     # Tkinter
     root = tkinter.Tk()
     root.title('Sound Pad')

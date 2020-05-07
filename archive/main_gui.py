@@ -5,6 +5,7 @@ import pygame
 import keyboard
 from modules.audio import SoundMusic, BackgroundMusic
 
+__version__ = 1.0
 
 FONT = ('Helvetica', '10')
 # BTN_FONT = ('Helvetica', '15')

@@ -1,25 +1,53 @@
 # Simple Sound Pad
 
-This section will be updated soon
+Simple sound pad inspired by real professional sound pads. It allows to ascribe music file to the button and play it by pressing the button or key on keyboard.
+
+As a big fun of tabletop RPGs and the game master I felt the urge to have such a program, but I could not find anything similar to it. 
+
+So I created it.
+
+It was also my side project while I was learning python. That is why some more advanced in python people may find totally unnecessary pieces of code in the source code, eg. abstract base class in audio module.
+
+I am aware of that, but I am not going to change this as I believe that it is better to have program with some mistakes in the code then to have a perfect program that does not exist.
+
+Please Notice that the program is still during the development process, therefore some feature may not work properly or at all, eg. pause button. 
+
+If you are among the people that also need such a program please feel welcome to use it.
 
 ## Getting Started
 
-This section will be updated soon
-
 ### Prerequisites
 
-This section will be updated soon
-
-```
-Give examples
-```
-
+*  [Python 3.6](https://www.python.org/download/releases/3.0/) or higher.
+*  [pip](https://pip.pypa.io/en/stable/) - python package installer
+  
 ### Installing
 
-This section will be updated soon
+1. Clone or download repository
+2. In the downloaded loaction run the following commands:
+
+##### On Windows
 
 ```
-Examples
+pip install -r requirements.txt
+```
+
+To run the program type:
+
+```
+python main_gui.py
+```
+
+##### On Linux
+
+```
+pip3 install -r requirements.txt
+```
+
+To run the program type:
+
+```
+python3 main_gui.py
 ```
 
 ## Usage

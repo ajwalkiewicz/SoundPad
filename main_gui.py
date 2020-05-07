@@ -6,10 +6,13 @@ import os
 import keyboard
 import json
 import webbrowser
+import modules.utils as utils
 from modules.audio import SoundMusic, BackgroundMusic
 
 
 __version__ = 2.0
+__author__ = "Adam Walkiewicz"
+github = "https://github.com/ajwalkiewicz/sound-pad"
 
 FONT = ('Helvetica', '10')
 NUMBER_OF_BUTTONS = 9
@@ -19,8 +22,6 @@ open_img_path = "images/folder-2x.png"
 stop_img_path = "images/media-stop-2x.png"
 pause_img_path = "images/media-pause-2x.png"
 play_img_path = "images/media-play-2x.png"
-
-github = "https://github.com/ajwalkiewicz/sound-pad"
 
 
 class Button(tkinter.Button):
@@ -171,20 +172,20 @@ class SaveProjectButton(Button):
 
     @staticmethod
     def save_project():
-        config = {}
-        for key, button in enumerate(OpenButton.buttons_list):
-            config.update({key: button.file_path})
-
         initial_directory = os.path.join('.')
         title = "Save Project"
         file_types = [('json files', '*.json'), ("All Files", "*.*")]
         try:
             save_file = tkinter.filedialog.asksaveasfile(
                 mode="w", initialdir=initial_directory, title=title, filetypes=file_types, defaultextension=".json")
-            json.dump(config, save_file)
-            save_file.close()
+            if hasattr(save_file, 'write'):
+                config = {key: button.file_path for key,
+                          button in enumerate(OpenButton.buttons_list)}
+                json.dump(config, save_file)
+                save_file.close()
         except PermissionError:
-            print("Permission denied")
+            tkinter.messagebox.showerror(
+                title="Permission Error", message="You do not have perrmision to save files in this loaction")
 
 
 class OpenProjectButton(Button):
@@ -201,12 +202,15 @@ class OpenProjectButton(Button):
         file_types = [('json files', '*.json'), ("All Files", "*.*")]
         file_path = tkinter.filedialog.askopenfilename(
             initialdir=initial_directory, title=title, filetypes=file_types)
+
         if file_path:
             if keyboard._hotkeys:
                 keyboard.remove_all_hotkeys()
+
             for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
                 PadButton.buttons_list[position].config(text=str(text))
                 sounds_list[position] = None
+
             with open(file_path, "r") as read_file:
                 data = json.loads(read_file.read())
                 files_not_found_list = []
@@ -223,10 +227,11 @@ class OpenProjectButton(Button):
                                 text=pad_button_text)
                         except FileNotFoundError:
                             files_not_found_list.append(item)
+
             if files_not_found_list:
-                message = "Could not find following files: \n"
-                for text in files_not_found_list:
-                    message += f"\n{text}"
+                message = "The following files could not be found: \n"
+                for nr, text in enumerate(files_not_found_list):
+                    message += f"\n{nr+1}. {text}"
                 tkinter.messagebox.showerror(
                     title="Missing Files", message=message)
 
@@ -266,7 +271,7 @@ class Help(MenuBar):
         self.help_menu()
 
     def help_menu(self):
-        self.add_command(label="Help")
+        self.add_command(label="Help", command=HelpWindow)
         self.add_command(label="More info",
                          command=lambda: webbrowser.open_new_tab(github))
 
@@ -314,10 +319,21 @@ class SettingsFrame(tkinter.Frame):
         OpenProjectButton(self).grid(row=1)
 
 
+class HelpWindow(tkinter.Tk):
+    def __init__(self, *args, **kwargs):
+        tkinter.Tk.__init__(self, *args, **kwargs)
+        self.title("Help")
+        self.resizable(width=False, height=False)
+        self.help_label = tkinter.Label(
+            self, text=utils.help_message, justify=tkinter.LEFT)
+        self.help_label.pack()
+
+
 class AppWindow(tkinter.Tk):
     def __init__(self, *args, **kwargs):
         tkinter.Tk.__init__(self, *args, **kwargs)
         self.title("Sound Pad")
+        self.resizable(width=False, height=False)
         self.button_frame = ButtonFrame(self)
         self.button_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
         # self.settings_frame = SettingsFrame(self)

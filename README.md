@@ -52,6 +52,9 @@ python3 main_gui.py
 
 ## Usage
 
+Screenshot:
+![Screenshot image](https://github.com/ajwalkiewicz/sound-pad/blob/master/image.png)
+
 This section will be updated soon
 
 ## Built With

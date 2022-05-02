@@ -41,15 +41,14 @@ class PadButton(Button):
         self.state = True
         self["width"] = 20
         self["height"] = 10
-        self["command"] = self.play
+        self["command"] = self.play_stop
         self["text"] = str(nr)
         PadButton.buttons_list.append(self)
         # self._button_list_sort()
 
-    def play(self):
-        logging.info(f"PAD BUTTON pressed, id: {self.nr}")
+    def play_stop(self):
         if isinstance(sounds_list[self.nr], SoundMusic):
-            sounds_list[self.nr].play()
+            sounds_list[self.nr].play_pause()
         else:
             logging.info(f"Empty PAD BUTTON pressed.")
 

@@ -63,12 +63,6 @@ This section will be updated soon
 * [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control
 * [Open Iconic v1.1.1](https://github.com/iconic/open-iconic) - open source sibling of Iconic
 
-## TODO
-
-[x] Play-pause feature
-[ ] Set the volue of each audio track individally
-[ ] Show the progress of the each audio track loaded
-
 ## Authors
 
 * **Adam Walkiewicz**

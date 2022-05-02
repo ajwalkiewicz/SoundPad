@@ -96,7 +96,7 @@ class OpenButton(Button):
         self.file_path = tkinter.filedialog.askopenfilename(
             initialdir=initial_directory, title=title, filetypes=file_types)
         if self.file_path:
-            sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
+            sounds_list[self.nr] = SoundMusic(self.file_path)
             hotkey = self.key_assigment.get(self.nr+1, "0")
             # Windows version
             keyboard.add_hotkey(hotkey, lambda: sounds_list[self.nr].play())
@@ -216,7 +216,7 @@ class OpenProjectButton(Button):
                 for key, item in data.items():
                     if item is not None:
                         try:
-                            sounds_list[int(key)] = SoundMusic(item, int(key))
+                            sounds_list[int(key)] = SoundMusic(item)
                             pad_button_text = os.path.split(item)[1]
                             hotkey = OpenButton.key_assigment.get(
                                 int(key)+1, "0")

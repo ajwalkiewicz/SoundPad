@@ -6,7 +6,7 @@ __version__ = 3.0
 __author__ = "Adam Walkiewicz"
 github = "https://github.com/ajwalkiewicz/sound-pad"
 
-DEFAULT_LOGGING_LEVEL = logging.ERROR
+DEFAULT_LOGGING_LEVEL: logging.ERROR
 
 LOGGING_LEVEL_MAP = {
     "debug": logging.DEBUG,

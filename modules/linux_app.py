@@ -5,6 +5,7 @@ import pygame
 import os
 import logging
 import json
+
 import webbrowser
 from pynput import keyboard
 
@@ -84,7 +85,6 @@ class OpenButton(Button):
         self.file_path = None
         OpenButton.buttons_list.append(self)
 
-
     def open_file(self):
         logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
         initial_directory = os.path.join('sounds')
@@ -95,6 +95,7 @@ class OpenButton(Button):
         if self.file_path:
             sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
             hotkey = self.key_assigment.get(self.nr+1, "0")
+            # Linux version
             keyboard.GlobalHotKeys({hotkey: lambda: sounds_list[self.nr].play()}).start()
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)

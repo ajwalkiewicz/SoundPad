@@ -20,17 +20,6 @@ If you are among the people that also need such a program please feel welcome to
 
 *  [Python 3.6](https://www.python.org/download/releases/3.0/) or higher.
 *  [pip](https://pip.pypa.io/en/stable/) - python package installer
-
-#### Ubuntu
-
-Necessery libraries 
-
-python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
-
-Install
-```
-sudo apt install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
-```
   
 ### Installing
 
@@ -46,7 +35,7 @@ pip install -r requirements.txt
 To run the program type:
 
 ```
-python main.py
+python main_gui.py
 ```
 
 ##### On Linux
@@ -58,7 +47,7 @@ pip3 install -r requirements.txt
 To run the program type:
 
 ```
-python3 main.py
+python3 main_gui.py
 ```
 
 ## Usage
@@ -71,8 +60,7 @@ This section will be updated soon
 
 * [Pygame](https://www.pygame.org/docs/) - set of Python modules designed for writing video games
 * [Tkinter](https://docs.python.org/3/library/tk.html) - Python module for GUI
-* [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control (used in windows version)
-* [pynput](https://pypi.org/project/pynput/) - Python library for keyboard control (Used in Linux verison)
+* [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control
 * [Open Iconic v1.1.1](https://github.com/iconic/open-iconic) - open source sibling of Iconic
 
 ## TODO

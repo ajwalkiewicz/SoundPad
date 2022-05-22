@@ -62,6 +62,7 @@ class SoundMusic():
 
     def play(self):
         self.channel.play(self.sound)
+        self.state = 1
         logging.debug("Sound played")
 
     def stop(self):

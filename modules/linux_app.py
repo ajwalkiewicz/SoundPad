@@ -368,7 +368,7 @@ class SettingsFrame(tkinter.Frame):
     def __init__(self, master=None):
         tkinter.Frame.__init__(self, master)
         self.master = master
-        self.create_buttons()
+        # self.create_buttons()
 
     def create_buttons(self):
         # SaveProjectButton(self).grid(row=0)

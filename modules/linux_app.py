@@ -87,7 +87,7 @@ class OpenButton(Button):
 
     def open_file(self):
         logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
-        initial_directory = os.path.join('sounds')
+        initial_directory = os.path.join('samples')
         title = "Select A File"
         file_types = [('wav files', '*.wav')]
         self.file_path = tkinter.filedialog.askopenfilename(

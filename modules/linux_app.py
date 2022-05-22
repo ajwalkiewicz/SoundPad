@@ -5,11 +5,12 @@ import pygame
 import os
 import logging
 import json
+
 import webbrowser
 from pynput import keyboard
 
 import modules.utils as utils
-from modules.audio import SoundMusic, BackgroundMusic
+from modules.audio import SoundMusic
         
 github = "https://github.com/ajwalkiewicz/sound-pad"
 
@@ -41,22 +42,17 @@ class PadButton(Button):
         self.state = True
         self["width"] = 20
         self["height"] = 10
-        self["command"] = self.play_stop
+        self["command"] = self.play
         self["text"] = str(nr)
         PadButton.buttons_list.append(self)
         # self._button_list_sort()
 
-    def play_stop(self):
-        if isinstance(sounds_list[self.nr], BackgroundMusic):
-            if self.state:
-                sounds_list[self.nr].play()
-                self.state = False
-            else:
-                sounds_list[self.nr].stop()
-                self.state = True
-
+    def play(self):
+        logging.info(f"PAD BUTTON pressed, id: {self.nr}")
         if isinstance(sounds_list[self.nr], SoundMusic):
             sounds_list[self.nr].play()
+        else:
+            logging.info(f"Empty PAD BUTTON pressed.")
 
     # def _button_list_sort(self):
     #     """Setting buttons in a right order.
@@ -89,16 +85,17 @@ class OpenButton(Button):
         self.file_path = None
         OpenButton.buttons_list.append(self)
 
-
     def open_file(self):
-        initial_directory = os.path.join('samples')
+        logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
+        initial_directory = os.path.join('sounds')
         title = "Select A File"
         file_types = [('wav files', '*.wav')]
         self.file_path = tkinter.filedialog.askopenfilename(
             initialdir=initial_directory, title=title, filetypes=file_types)
         if self.file_path:
-            sounds_list[self.nr] = SoundMusic(self.file_path)
+            sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
             hotkey = self.key_assigment.get(self.nr+1, "0")
+            # Linux version
             keyboard.GlobalHotKeys({hotkey: lambda: sounds_list[self.nr].play()}).start()
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
@@ -120,6 +117,7 @@ class StopButton(Button):
         self.buttons_list.append(self)
 
     def stop_file(self):
+        logging.info(f"STOP BUTTON pressed, id: {self.nr}")
         if isinstance(sounds_list[self.nr], SoundMusic):
             sounds_list[self.nr].stop()
 
@@ -139,8 +137,9 @@ class PauseButton(Button):
         self.buttons_list.append(self)
 
     def pause(self):
-        if isinstance(sounds_list[self.nr], BackgroundMusic):
-            sounds_list[self.nr].pause()
+        logging.info(f"PAUSE BUTTON pressed, id: {self.nr}")
+        if isinstance(sounds_list[self.nr], SoundMusic):
+            sounds_list[self.nr].play_pause()
 
 
 class PlayButton(Button):
@@ -158,8 +157,8 @@ class PlayButton(Button):
         self.buttons_list.append(self)
 
     def play(self):
-        logging.info(f"Play button used, id: {self.nr}")
-        if isinstance(sounds_list[self.nr], BackgroundMusic) or isinstance(sounds_list[self.nr], SoundMusic):
+        logging.info(f"PLAY BUTTON pressed, id: {self.nr}")
+        if isinstance(sounds_list[self.nr], SoundMusic):
             sounds_list[self.nr].play()
 
 
@@ -172,6 +171,7 @@ class SaveProjectButton(Button):
 
     @staticmethod
     def save_project():
+        logging.info(f"SAVE PROJECT selected")
         initial_directory = os.path.join('.')
         title = "Save Project"
         file_types = [('json files', '*.json'), ("All Files", "*.*")]
@@ -184,6 +184,7 @@ class SaveProjectButton(Button):
                 json.dump(config, save_file)
                 save_file.close()
         except PermissionError:
+            logging.debug(f"PERMISSION ERROR while trying to save project")
             tkinter.messagebox.showerror(
                 title="Permission Error", message="You do not have perrmision to save files in this loaction")
 
@@ -197,6 +198,7 @@ class OpenProjectButton(Button):
 
     @staticmethod
     def open_project():
+        logging.info(f"OPEN PROJECT selected")
         initial_directory = os.path.join('.')
         title = "Select Project"
         file_types = [('json files', '*.json'), ("All Files", "*.*")]
@@ -217,7 +219,7 @@ class OpenProjectButton(Button):
                 for key, item in data.items():
                     if item is not None:
                         try:
-                            sounds_list[int(key)] = SoundMusic(item)
+                            sounds_list[int(key)] = SoundMusic(item, int(key))
                             pad_button_text = os.path.split(item)[1]
                             hotkey = OpenButton.key_assigment.get(
                                 int(key)+1, "0")
@@ -246,6 +248,7 @@ class StopAll(Button):
         self["command"] = self.stop_all
 
     def stop_all(self) -> None:
+        logging.info(f"STOP ALL BUTTON pressed")
         pygame.mixer.stop()
 
 
@@ -258,6 +261,7 @@ class PauseAll(Button):
         self["command"] = self.pause_all
 
     def pause_all(self) -> None:
+        logging.info(f"PAUSE ALL BUTTON pressed")
         pygame.mixer.pause()
 
 
@@ -270,6 +274,7 @@ class UnpauseAll(Button):
         self["command"] = self.unpause_all
 
     def unpause_all(self) -> None:
+        logging.info(f"UNPAUSE ALL BUTTON pressed")
         pygame.mixer.unpause()
 
 
@@ -282,6 +287,7 @@ class FadeoutAll(Button):
         self["command"] = self.fadeout_all
 
     def fadeout_all(self) -> None:
+        logging.info(f"FADEOUT ALL BUTTON pressed")
         pygame.mixer.fadeout(2000)
 
 
@@ -371,7 +377,6 @@ class SettingsFrame(tkinter.Frame):
         PauseAll(self).grid(row=1)
         UnpauseAll(self).grid(row=2)
         FadeoutAll(self).grid(row=3)
-        pass
 
 class HelpWindow(tkinter.Tk):
     def __init__(self, *args, **kwargs):

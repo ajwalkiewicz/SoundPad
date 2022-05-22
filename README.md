@@ -87,4 +87,18 @@ This section will be updated soon
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+### Music
+
+All the audio samples used in this project are under  [Creative Commons 0 License](https://creativecommons.org/publicdomain/zero/1.0/).
+
+Files were downloaded fomr https://freesound.org/
+
+- 149022__foxen10__train.wav
+- 155346__mario1298__street-old-town-of-rhodes.wav
+- 267128__contramundum__stepping-down-into-the-dungeon.mp3
+- 424792__bolkmar__town-bells.wav
+- 580442__bennynz__dungeon-lock-2.wav
+- 581491__carthny__thunder-rush-28-july-2021.wav
+
+### SoundPad
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -1,6 +1,7 @@
 import pygame
 import os
 import logging
+
 # import abc
 
 
@@ -42,15 +43,16 @@ import logging
 #             pygame.mixer.music.unpause()
 
 
-class SoundMusic():
+class SoundMusic:
     """
-    SoundMucic is an object that combines both 
+    SoundMucic is an object that combines both
     pygame.miser.Sound and pygame.mixer.Channel
-    to control music. 
+    to control music.
     """
+
     channel_list = []
     id = 0
-    
+
     def __init__(self, file, sound_id: int):
         self.path = os.path.join(file)
         self.sound = pygame.mixer.Sound(self.path)

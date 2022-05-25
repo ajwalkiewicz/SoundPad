@@ -5,23 +5,31 @@ import pygame
 import os
 import logging
 import json
+from typing import List, Union
 
 import webbrowser
 from pynput import keyboard
 
 import modules.utils as utils
 from modules.audio import SoundMusic
-        
-github = "https://github.com/ajwalkiewicz/sound-pad"
 
-FONT = ('Helvetica', '10')
+_THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+
+FONT = ("Helvetica", "10")
 NUMBER_OF_BUTTONS = 9
-sounds_list = [None for _ in range(NUMBER_OF_BUTTONS)]
+sounds_list: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
+
+github = "https://github.com/ajwalkiewicz/sound-pad"
 
 open_img_path = "images/folder-2x.png"
 stop_img_path = "images/media-stop-2x.png"
 pause_img_path = "images/media-pause-2x.png"
 play_img_path = "images/media-play-2x.png"
+
+with open(os.path.join(_THIS_FOLDER, "data", "settings.json"), "r") as json_file:
+    settings: dict = json.load(json_file)
+    DEFAULT_DIRECTORY: str = settings["default_directory"]
+    NUM_CHANNELS: int = settings["num_channels"]
 
 
 class Button(tkinter.Button):
@@ -67,9 +75,15 @@ class PadButton(Button):
 class OpenButton(Button):
     buttons_list = []
     key_assigment = {
-        1: "7", 2: "8", 3: "9",
-        4: "4", 5: "5", 6: "6",
-        7: "1", 8: "2", 9: "3"
+        1: "7",
+        2: "8",
+        3: "9",
+        4: "4",
+        5: "5",
+        6: "6",
+        7: "1",
+        8: "2",
+        9: "3",
     }
 
     def __init__(self, frame=None):
@@ -87,16 +101,19 @@ class OpenButton(Button):
 
     def open_file(self):
         logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
-        initial_directory = os.path.join('samples')
+        initial_directory = os.path.join(DEFAULT_DIRECTORY)
         title = "Select A File"
-        file_types = [('wav files', '*.wav')]
+        file_types = [("wav files", "*.wav")]
         self.file_path = tkinter.filedialog.askopenfilename(
-            initialdir=initial_directory, title=title, filetypes=file_types)
+            initialdir=initial_directory, title=title, filetypes=file_types
+        )
         if self.file_path:
             sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
-            hotkey = self.key_assigment.get(self.nr+1, "0")
+            hotkey = self.key_assigment.get(self.nr + 1, "0")
             # Linux version
-            keyboard.GlobalHotKeys({hotkey: lambda: sounds_list[self.nr].play()}).start()
+            keyboard.GlobalHotKeys(
+                {hotkey: lambda: sounds_list[self.nr].play()}
+            ).start()
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
 
@@ -172,21 +189,30 @@ class SaveProjectButton(Button):
     @staticmethod
     def save_project():
         logging.info(f"SAVE PROJECT selected")
-        initial_directory = os.path.join('.')
+        initial_directory = os.path.join(".")
         title = "Save Project"
-        file_types = [('json files', '*.json'), ("All Files", "*.*")]
+        file_types = [("json files", "*.json"), ("All Files", "*.*")]
         try:
             save_file = tkinter.filedialog.asksaveasfile(
-                mode="w", initialdir=initial_directory, title=title, filetypes=file_types, defaultextension=".json")
-            if hasattr(save_file, 'write'):
-                config = {key: button.file_path for key,
-                          button in enumerate(OpenButton.buttons_list)}
+                mode="w",
+                initialdir=initial_directory,
+                title=title,
+                filetypes=file_types,
+                defaultextension=".json",
+            )
+            if hasattr(save_file, "write"):
+                config = {
+                    key: button.file_path
+                    for key, button in enumerate(OpenButton.buttons_list)
+                }
                 json.dump(config, save_file)
                 save_file.close()
         except PermissionError:
             logging.debug(f"PERMISSION ERROR while trying to save project")
             tkinter.messagebox.showerror(
-                title="Permission Error", message="You do not have perrmision to save files in this loaction")
+                title="Permission Error",
+                message="You do not have perrmision to save files in this loaction",
+            )
 
 
 class OpenProjectButton(Button):
@@ -199,15 +225,16 @@ class OpenProjectButton(Button):
     @staticmethod
     def open_project():
         logging.info(f"OPEN PROJECT selected")
-        initial_directory = os.path.join('.')
+        initial_directory = os.path.join(".")
         title = "Select Project"
-        file_types = [('json files', '*.json'), ("All Files", "*.*")]
+        file_types = [("json files", "*.json"), ("All Files", "*.*")]
         file_path = tkinter.filedialog.askopenfilename(
-            initialdir=initial_directory, title=title, filetypes=file_types)
+            initialdir=initial_directory, title=title, filetypes=file_types
+        )
 
         if file_path:
             # if keyboard._hotkeys:
-                # keyboard.remove_all_hotkeys()
+            # keyboard.remove_all_hotkeys()
 
             for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
                 PadButton.buttons_list[position].config(text=str(text))
@@ -221,13 +248,13 @@ class OpenProjectButton(Button):
                         try:
                             sounds_list[int(key)] = SoundMusic(item, int(key))
                             pad_button_text = os.path.split(item)[1]
-                            hotkey = OpenButton.key_assigment.get(
-                                int(key)+1, "0")
-                            keyboard.GlobalHotKeys({
-                                hotkey: lambda key=int(key): sounds_list[key].play()
-                                }).start()
+                            hotkey = OpenButton.key_assigment.get(int(key) + 1, "0")
+                            keyboard.GlobalHotKeys(
+                                {hotkey: lambda key=int(key): sounds_list[key].play()}
+                            ).start()
                             PadButton.buttons_list[int(key)].config(
-                                text=pad_button_text)
+                                text=pad_button_text
+                            )
                         except FileNotFoundError:
                             files_not_found_list.append(item)
 
@@ -235,8 +262,7 @@ class OpenProjectButton(Button):
                 message = "The following files could not be found: \n"
                 for nr, text in enumerate(files_not_found_list):
                     message += f"\n{nr+1}. {text}"
-                tkinter.messagebox.showerror(
-                    title="Missing Files", message=message)
+                tkinter.messagebox.showerror(title="Missing Files", message=message)
 
 
 class StopAll(Button):
@@ -314,10 +340,8 @@ class File(MenuBar):
         self.file_list.append(self)
 
     def file_menu(self):
-        self.add_command(label="Open Project",
-                         command=OpenProjectButton.open_project)
-        self.add_command(label="Save Project",
-                         command=SaveProjectButton.save_project)
+        self.add_command(label="Open Project", command=OpenProjectButton.open_project)
+        self.add_command(label="Save Project", command=SaveProjectButton.save_project)
         self.add_separator()
 
 
@@ -328,15 +352,16 @@ class Help(MenuBar):
 
     def help_menu(self):
         self.add_command(label="Help", command=HelpWindow)
-        self.add_command(label="More info",
-                         command=lambda: webbrowser.open_new_tab(github))
+        self.add_command(
+            label="More info", command=lambda: webbrowser.open_new_tab(github)
+        )
 
 
 class ButtonFrame(tkinter.Frame):
     BUTTONS_VALUES = [
         (1, [(1, 7), (6, 8), (10, 9)]),
         (3, [(1, 4), (6, 5), (10, 6)]),
-        (5, [(1, 1), (6, 2), (10, 3)])
+        (5, [(1, 1), (6, 2), (10, 3)]),
     ]
 
     def __init__(self, master=None):
@@ -348,27 +373,26 @@ class ButtonFrame(tkinter.Frame):
         for row, values in self.BUTTONS_VALUES:
             for col, val in values:
                 button = PadButton(self, val)
-                button.grid(row=row, column=col,
-                            columnspan=4, sticky=tkinter.NSEW)
+                button.grid(row=row, column=col, columnspan=4, sticky=tkinter.NSEW)
 
                 btn = OpenButton(self)
-                btn.grid(row=row+1, column=col, sticky=tkinter.NSEW)
+                btn.grid(row=row + 1, column=col, sticky=tkinter.NSEW)
 
                 stop_btn = StopButton(self)
-                stop_btn.grid(row=row+1, column=col+1, sticky=tkinter.NSEW)
+                stop_btn.grid(row=row + 1, column=col + 1, sticky=tkinter.NSEW)
 
                 pause_btn = PauseButton(self)
-                pause_btn.grid(row=row+1, column=col+2, sticky=tkinter.NSEW)
+                pause_btn.grid(row=row + 1, column=col + 2, sticky=tkinter.NSEW)
 
                 play_btn = PlayButton(self)
-                play_btn.grid(row=row+1, column=col+3, sticky=tkinter.NSEW)
+                play_btn.grid(row=row + 1, column=col + 3, sticky=tkinter.NSEW)
 
 
 class SettingsFrame(tkinter.Frame):
     def __init__(self, master=None):
         tkinter.Frame.__init__(self, master)
         self.master = master
-        # self.create_buttons()
+        self.create_buttons()
 
     def create_buttons(self):
         # SaveProjectButton(self).grid(row=0)
@@ -378,13 +402,15 @@ class SettingsFrame(tkinter.Frame):
         UnpauseAll(self).grid(row=2)
         FadeoutAll(self).grid(row=3)
 
+
 class HelpWindow(tkinter.Tk):
     def __init__(self, *args, **kwargs):
         tkinter.Tk.__init__(self, *args, **kwargs)
         self.title("Help")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(
-            self, text=utils.help_message, justify=tkinter.LEFT)
+            self, text=utils.help_message, justify=tkinter.LEFT
+        )
         self.help_label.pack()
 
 
@@ -406,8 +432,10 @@ class AppWindow(tkinter.Tk):
 def run() -> None:
     """Main Program Function"""
     pygame.mixer.init()
+    pygame.mixer.set_num_channels(NUM_CHANNELS)
     app = AppWindow()
     app.mainloop()
+
 
 if __name__ == "__main__":
     run()

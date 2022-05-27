@@ -30,6 +30,7 @@ with open(os.path.join(_THIS_FOLDER, "data", "settings.json"), "r") as json_file
     settings: dict = json.load(json_file)
     DEFAULT_DIRECTORY: str = settings["default_directory"]
     NUM_CHANNELS: int = settings["num_channels"]
+    KEY_RANGE: str = settings["key_range"]
 
 
 class Button(tkinter.Button):
@@ -74,7 +75,7 @@ class PadButton(Button):
 
 class OpenButton(Button):
     buttons_list = []
-    key_assigment = {
+    system_wide_key_assigment = {
         1: "7",
         2: "8",
         3: "9",
@@ -84,6 +85,17 @@ class OpenButton(Button):
         7: "1",
         8: "2",
         9: "3",
+    }
+    inside_app_key_assigment = {
+        1: "<KP_7>",
+        2: "<KP_8>",
+        3: "<KP_9>",
+        4: "<KP_4>",
+        5: "<KP_5>",
+        6: "<KP_6>",
+        7: "<KP_1>",
+        8: "<KP_2>",
+        9: "<KP_3>",
     }
 
     def __init__(self, frame=None):
@@ -109,14 +121,21 @@ class OpenButton(Button):
         )
         if self.file_path:
             sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
-            hotkey = self.key_assigment.get(self.nr + 1, "0")
-            # Linux version
-            keyboard.GlobalHotKeys(
-                {hotkey: lambda: sounds_list[self.nr].play()}
-            ).start()
+            self.bind_key(self.nr)
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
 
+    def bind_key(self, key: int):
+        logging.debug(f"Bind key: {key}")
+        if KEY_RANGE == "inside_app":
+            hotkey = self.inside_app_key_assigment.get(key + 1, "0")
+            self.master.master.bind(hotkey, lambda event: sounds_list[key].play())
+        if KEY_RANGE == "system_wide":
+            hotkey = self.system_wide_key_assigment.get(key + 1, "0")
+            keyboard.GlobalHotKeys(
+                {hotkey: lambda: sounds_list[key].play()}
+            ).start()
+            
 
 class StopButton(Button):
     buttons_list = []
@@ -248,10 +267,7 @@ class OpenProjectButton(Button):
                         try:
                             sounds_list[int(key)] = SoundMusic(item, int(key))
                             pad_button_text = os.path.split(item)[1]
-                            hotkey = OpenButton.key_assigment.get(int(key) + 1, "0")
-                            keyboard.GlobalHotKeys(
-                                {hotkey: lambda key=int(key): sounds_list[key].play()}
-                            ).start()
+                            OpenButton.buttons_list[int(key)].bind_key(int(key))
                             PadButton.buttons_list[int(key)].config(
                                 text=pad_button_text
                             )
@@ -424,6 +440,9 @@ class AppWindow(tkinter.Tk):
         self.settings_frame = SettingsFrame(self)
         self.settings_frame.grid(row=0, column=1, sticky=tkinter.NSEW)
         self.filemenu = MenuBar()
+        # General keybindings
+        self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
+        self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())
         # To change
         File.file_list[0].add_command(label="Exit", command=self.destroy)
         self.config(menu=self.filemenu)

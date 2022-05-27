@@ -1,4 +1,5 @@
 {
     "default_directory": "samples",
-    "num_channels": 9
+    "num_channels": 9,
+    "key_range": "inside_app"
 }

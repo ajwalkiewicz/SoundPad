@@ -3,12 +3,13 @@ import tkinter.filedialog
 import tkinter.messagebox
 import pygame
 import os
+import sys
 import logging
 import json
 from typing import List, Union
 
 import webbrowser
-import keyboard
+from pynput import keyboard
 
 import modules.utils as utils
 from modules.audio import SoundMusic
@@ -17,7 +18,31 @@ _THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 
 FONT = ("Helvetica", "10")
 NUMBER_OF_BUTTONS = 9
-sounds_list: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
+SOUNDS_LIST: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
+
+SYSTEM_WIDE_KEY_MAPPING = {
+    1: "7",
+    2: "8",
+    3: "9",
+    4: "4",
+    5: "5",
+    6: "6",
+    7: "1",
+    8: "2",
+    9: "3",
+}
+
+INSIDE_APP_KEY_MAPPING = {
+    1: "<KP_7>",
+    2: "<KP_8>",
+    3: "<KP_9>",
+    4: "<KP_4>",
+    5: "<KP_5>",
+    6: "<KP_6>",
+    7: "<KP_1>",
+    8: "<KP_2>",
+    9: "<KP_3>",
+}
 
 github = "https://github.com/ajwalkiewicz/sound-pad"
 
@@ -31,6 +56,33 @@ with open(os.path.join(_THIS_FOLDER, "data", "settings.json"), "r") as json_file
     DEFAULT_DIRECTORY: str = settings["default_directory"]
     NUM_CHANNELS: int = settings["num_channels"]
     KEY_RANGE: str = settings["key_range"]
+    FONT: tuple = (settings["font_type"], settings["font_size"])
+    SHOW_SETTINGS: bool = settings["show_settings"]
+
+system = sys.platform
+if system == "win32":
+    logging.info(f"System detected: {system}. Use Windows configuration")
+    import keyboard
+
+    def keyboard_add_hotkey(hotkey: str, key: int):
+        return keyboard.add_hotkey(hotkey, lambda: SOUNDS_LIST[key].play())
+
+else:
+    logging.info(f"System detected: {system}. Use UNIX configuration")
+    from pynput import keyboard
+
+    def keyboard_add_hotkey(hotkey: str, key: int):
+        return keyboard.GlobalHotKeys({hotkey: lambda: SOUNDS_LIST[key].play()}).start()
+
+
+def bind_key(key: int, object: tkinter.Tk):
+    logging.debug(f"Bind key: {key}")
+    if KEY_RANGE == "inside_app":
+        hotkey = INSIDE_APP_KEY_MAPPING.get(key + 1, "0")
+        object.bind(hotkey, lambda event: SOUNDS_LIST[key].play())
+    if KEY_RANGE == "system_wide":
+        hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
+        keyboard_add_hotkey(hotkey, key)
 
 
 class Button(tkinter.Button):
@@ -58,8 +110,8 @@ class PadButton(Button):
 
     def play(self):
         logging.info(f"PAD BUTTON pressed, id: {self.nr}")
-        if isinstance(sounds_list[self.nr], SoundMusic):
-            sounds_list[self.nr].play()
+        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
+            SOUNDS_LIST[self.nr].play()
         else:
             logging.info(f"Empty PAD BUTTON pressed.")
 
@@ -75,28 +127,6 @@ class PadButton(Button):
 
 class OpenButton(Button):
     buttons_list = []
-    system_wide_key_assigment = {
-        1: "7",
-        2: "8",
-        3: "9",
-        4: "4",
-        5: "5",
-        6: "6",
-        7: "1",
-        8: "2",
-        9: "3",
-    }
-    inside_app_key_assigment = {
-        1: "<KP_7>",
-        2: "<KP_8>",
-        3: "<KP_9>",
-        4: "<KP_4>",
-        5: "<KP_5>",
-        6: "<KP_6>",
-        7: "<KP_1>",
-        8: "<KP_2>",
-        9: "<KP_3>",
-    }
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -120,19 +150,10 @@ class OpenButton(Button):
             initialdir=initial_directory, title=title, filetypes=file_types
         )
         if self.file_path:
-            sounds_list[self.nr] = SoundMusic(self.file_path, self.nr)
-            self.bind_key(self.nr)
+            SOUNDS_LIST[self.nr] = SoundMusic(self.file_path, self.nr)
+            bind_key(self.nr, self.master.master)
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
-
-    def bind_key(self, key: int):
-        logging.debug(f"Bind key: {key}")
-        if KEY_RANGE == "inside_app":
-            hotkey = self.inside_app_key_assigment.get(key + 1, "0")
-            self.master.master.bind(hotkey, lambda event: sounds_list[key].play())
-        if KEY_RANGE == "system_wide":
-            hotkey = self.system_wide_key_assigment.get(key + 1, "0")
-            keyboard.add_hotkey(hotkey, lambda: sounds_list[key].play())
 
 
 class StopButton(Button):
@@ -152,8 +173,8 @@ class StopButton(Button):
 
     def stop_file(self):
         logging.info(f"STOP BUTTON pressed, id: {self.nr}")
-        if isinstance(sounds_list[self.nr], SoundMusic):
-            sounds_list[self.nr].stop()
+        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
+            SOUNDS_LIST[self.nr].stop()
 
 
 class PauseButton(Button):
@@ -172,8 +193,8 @@ class PauseButton(Button):
 
     def pause(self):
         logging.info(f"PAUSE BUTTON pressed, id: {self.nr}")
-        if isinstance(sounds_list[self.nr], SoundMusic):
-            sounds_list[self.nr].play_pause()
+        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
+            SOUNDS_LIST[self.nr].play_pause()
 
 
 class PlayButton(Button):
@@ -192,8 +213,8 @@ class PlayButton(Button):
 
     def play(self):
         logging.info(f"PLAY BUTTON pressed, id: {self.nr}")
-        if isinstance(sounds_list[self.nr], SoundMusic):
-            sounds_list[self.nr].play()
+        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
+            SOUNDS_LIST[self.nr].play()
 
 
 class SaveProjectButton(Button):
@@ -250,12 +271,12 @@ class OpenProjectButton(Button):
         )
 
         if file_path:
-            if keyboard._hotkeys:
-                keyboard.remove_all_hotkeys()
+            # if keyboard._hotkeys:
+            # keyboard.remove_all_hotkeys()
 
             for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
                 PadButton.buttons_list[position].config(text=str(text))
-                sounds_list[position] = None
+                SOUNDS_LIST[position] = None
 
             with open(file_path, "r") as read_file:
                 data = json.loads(read_file.read())
@@ -263,9 +284,13 @@ class OpenProjectButton(Button):
                 for key, item in data.items():
                     if item is not None:
                         try:
-                            sounds_list[int(key)] = SoundMusic(item, int(key))
+                            SOUNDS_LIST[int(key)] = SoundMusic(item, int(key))
                             pad_button_text = os.path.split(item)[1]
-                            OpenButton.buttons_list[int(key)].bind_key(int(key))
+                            # OpenButton.buttons_list[int(key)].bind_key(int(key))
+                            bind_key(
+                                int(key),
+                                OpenButton.buttons_list[int(key)].master.master,
+                            )
                             PadButton.buttons_list[int(key)].config(
                                 text=pad_button_text
                             )
@@ -342,6 +367,7 @@ class MenuBar(tkinter.Menu):
 
     def create_file_menu(self):
         self.add_cascade(label="File", menu=File())
+        self.add_cascade(label="View", menu=View())
         self.add_cascade(label="Help", menu=Help())
 
 
@@ -356,7 +382,39 @@ class File(MenuBar):
     def file_menu(self):
         self.add_command(label="Open Project", command=OpenProjectButton.open_project)
         self.add_command(label="Save Project", command=SaveProjectButton.save_project)
+        self.add_command(label="Settigns", command=SettingsWindow)
         self.add_separator()
+
+
+class View(MenuBar):
+    def __init__(self):
+        tkinter.Menu.__init__(self, tearoff=0)
+        self.settings_state = SHOW_SETTINGS
+        self.view_menu()
+
+    def view_menu(self):
+        if self.settings_state:
+            settings_label = "✓ Show settings"
+        else:
+            settings_label = "  Show settings"
+        self.add_command(label=settings_label, command=self.toggle_settings_frame)
+
+    def toggle_settings_frame(self):
+        logging.debug(f"settings state: {self.settings_state}")
+        if self.settings_state:
+            self.settings_state = False
+            self.entryconfigure(1, label="  Show settings")
+        else:
+            self.settings_state = True
+            self.entryconfigure(1, label="✓ Show settings")
+
+        settings_frame = SettingsFrame.settings_frame_list[0]
+
+        return (
+            settings_frame.show_frame()
+            if self.settings_state
+            else settings_frame.hide_frame()
+        )
 
 
 class Help(MenuBar):
@@ -403,18 +461,27 @@ class ButtonFrame(tkinter.Frame):
 
 
 class SettingsFrame(tkinter.Frame):
+    settings_frame_list = []
+
     def __init__(self, master=None):
         tkinter.Frame.__init__(self, master)
         self.master = master
         self.create_buttons()
+        self.settings_frame_list.append(self)
 
     def create_buttons(self):
-        # SaveProjectButton(self).grid(row=0)
-        # OpenProjectButton(self).grid(row=1)
         StopAll(self).grid(row=0)
         PauseAll(self).grid(row=1)
         UnpauseAll(self).grid(row=2)
         FadeoutAll(self).grid(row=3)
+
+    def show_frame(self):
+        logging.debug(f"Show settings frame")
+        return self.grid(row=0, column=1, sticky=tkinter.NSEW)
+
+    def hide_frame(self):
+        logging.debug(f"Hide settings frame")
+        return self.grid_forget()
 
 
 class HelpWindow(tkinter.Tk):
@@ -428,6 +495,17 @@ class HelpWindow(tkinter.Tk):
         self.help_label.pack()
 
 
+class SettingsWindow(tkinter.Tk):
+    def __init__(self, *args, **kwargs):
+        tkinter.Tk.__init__(self, *args, **kwargs)
+        self.title("Settings")
+        self.resizable(width=False, height=False)
+        self.help_label = tkinter.Label(
+            self, text="TODO: Settings here", justify=tkinter.LEFT
+        )
+        self.help_label.pack()
+
+
 class AppWindow(tkinter.Tk):
     def __init__(self, *args, **kwargs):
         tkinter.Tk.__init__(self, *args, **kwargs)
@@ -435,9 +513,10 @@ class AppWindow(tkinter.Tk):
         self.resizable(width=False, height=False)
         self.button_frame = ButtonFrame(self)
         self.button_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
-        # self.settings_frame = SettingsFrame(self)
-        # self.settings_frame.grid(row=0, column=1, sticky=tkinter.NSEW)
+        self.settings_frame = SettingsFrame(self)
         self.filemenu = MenuBar()
+        if SHOW_SETTINGS:
+            self.settings_frame.show_frame()
         # General keybindings
         self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
         self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())

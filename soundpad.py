@@ -29,22 +29,8 @@ def main():
     )
     print(f"Logging level set to: {logging_level}")
 
-    system = sys.platform
-    if system == "linux":
-        logging.info(f"System detected: {system}")
-        import modules.linux_app as app
-
-        app.run()
-    elif system == "win32":
-        logging.info(f"System detected: {system}")
-        import modules.win_app as app
-
-        app.run()
-    else:
-        logging.info(f"System detected: {system}, runing in linux configuration")
-        import modules.linux_app as app
-
-        app.run()
+    import modules.app as app
+    app.run()
 
 
 if __name__ == "__main__":

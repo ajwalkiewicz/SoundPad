@@ -75,11 +75,15 @@ class SoundMusic:
         if self.state:
             self.channel.pause()
             self.state = 0
-            logging.debug(f"Sound paused, state: {self.state}, id: {self.id}, path: {self.path}")
+            logging.debug(
+                f"Sound paused, state: {self.state}, id: {self.id}, path: {self.path}"
+            )
         else:
             self.channel.unpause()
             self.state = 1
-            logging.debug(f"Sound unpaused, state: {self.state}, id: {self.id}, path: {self.path}")
+            logging.debug(
+                f"Sound unpaused, state: {self.state}, id: {self.id}, path: {self.path}"
+            )
 
     def fadeout(self, miliseconds: int):
         self.channel.fadeout(miliseconds)

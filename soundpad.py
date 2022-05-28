@@ -13,18 +13,19 @@ LOGGING_LEVEL_MAP = {
     "info": logging.INFO,
     "warning": logging.WARNING,
     "error": logging.ERROR,
-    "critical": logging.CRITICAL
+    "critical": logging.CRITICAL,
 }
+
 
 def main():
     if len(sys.argv) > 1:
         logging_level = LOGGING_LEVEL_MAP.get(str(sys.argv[1]).lower(), "error")
     else:
         logging_level = DEFAULT_LOGGING_LEVEL
-    
+
     logging.basicConfig(
-    format="[%(asctime)s][%(levelname)s][%(filename)s:%(funcName)s:%(lineno)d] %(message)s",
-    level=logging_level
+        format="[%(asctime)s][%(levelname)s][%(filename)s:%(funcName)s:%(lineno)d] %(message)s",
+        level=logging_level,
     )
     print(f"Logging level set to: {logging_level}")
 
@@ -32,15 +33,19 @@ def main():
     if system == "linux":
         logging.info(f"System detected: {system}")
         import modules.linux_app as app
+
         app.run()
     elif system == "win32":
         logging.info(f"System detected: {system}")
         import modules.win_app as app
+
         app.run()
     else:
         logging.info(f"System detected: {system}, runing in linux configuration")
         import modules.linux_app as app
+
         app.run()
+
 
 if __name__ == "__main__":
     main()

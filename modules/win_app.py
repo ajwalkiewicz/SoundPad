@@ -51,7 +51,7 @@ class PadButton(Button):
         self.state = True
         self["width"] = 20
         self["height"] = 10
-        self["command"] = self.play_stop
+        self["command"] = self.play
         self["text"] = str(nr)
         PadButton.buttons_list.append(self)
         # self._button_list_sort()

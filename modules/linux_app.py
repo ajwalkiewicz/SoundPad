@@ -1,3 +1,4 @@
+from cProfile import label
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
@@ -31,6 +32,8 @@ with open(os.path.join(_THIS_FOLDER, "data", "settings.json"), "r") as json_file
     DEFAULT_DIRECTORY: str = settings["default_directory"]
     NUM_CHANNELS: int = settings["num_channels"]
     KEY_RANGE: str = settings["key_range"]
+    FONT: tuple = (settings["font_type"], settings["font_size"])
+    SHOW_SETTINGS: bool = settings["show_settings"]
 
 
 class Button(tkinter.Button):
@@ -132,10 +135,8 @@ class OpenButton(Button):
             self.master.master.bind(hotkey, lambda event: sounds_list[key].play())
         if KEY_RANGE == "system_wide":
             hotkey = self.system_wide_key_assigment.get(key + 1, "0")
-            keyboard.GlobalHotKeys(
-                {hotkey: lambda: sounds_list[key].play()}
-            ).start()
-            
+            keyboard.GlobalHotKeys({hotkey: lambda: sounds_list[key].play()}).start()
+
 
 class StopButton(Button):
     buttons_list = []
@@ -344,6 +345,7 @@ class MenuBar(tkinter.Menu):
 
     def create_file_menu(self):
         self.add_cascade(label="File", menu=File())
+        self.add_cascade(label="View", menu=View())
         self.add_cascade(label="Help", menu=Help())
 
 
@@ -358,7 +360,39 @@ class File(MenuBar):
     def file_menu(self):
         self.add_command(label="Open Project", command=OpenProjectButton.open_project)
         self.add_command(label="Save Project", command=SaveProjectButton.save_project)
+        self.add_command(label="Settigns", command=SettingsWindow)
         self.add_separator()
+
+
+class View(MenuBar):
+    def __init__(self):
+        tkinter.Menu.__init__(self, tearoff=0)
+        self.settings_state = SHOW_SETTINGS
+        self.view_menu()
+
+    def view_menu(self):
+        if self.settings_state:
+            settings_label = "✓ Show settings"
+        else:
+            settings_label = "  Show settings"
+        self.add_command(label=settings_label, command=self.toggle_settings_frame)
+
+    def toggle_settings_frame(self):
+        logging.debug(f"settings state: {self.settings_state}")
+        if self.settings_state:
+            self.settings_state = False
+            self.entryconfigure(1, label="  Show settings")
+        else:
+            self.settings_state = True
+            self.entryconfigure(1, label="✓ Show settings")
+
+        settings_frame = SettingsFrame.settings_frame_list[0]
+
+        return (
+            settings_frame.show_frame()
+            if self.settings_state
+            else settings_frame.hide_frame()
+        )
 
 
 class Help(MenuBar):
@@ -405,18 +439,27 @@ class ButtonFrame(tkinter.Frame):
 
 
 class SettingsFrame(tkinter.Frame):
+    settings_frame_list = []
+
     def __init__(self, master=None):
         tkinter.Frame.__init__(self, master)
         self.master = master
         self.create_buttons()
+        self.settings_frame_list.append(self)
 
     def create_buttons(self):
-        # SaveProjectButton(self).grid(row=0)
-        # OpenProjectButton(self).grid(row=1)
         StopAll(self).grid(row=0)
         PauseAll(self).grid(row=1)
         UnpauseAll(self).grid(row=2)
         FadeoutAll(self).grid(row=3)
+
+    def show_frame(self):
+        logging.debug(f"Show settings frame")
+        return self.grid(row=0, column=1, sticky=tkinter.NSEW)
+
+    def hide_frame(self):
+        logging.debug(f"Hide settings frame")
+        return self.grid_forget()
 
 
 class HelpWindow(tkinter.Tk):
@@ -430,6 +473,17 @@ class HelpWindow(tkinter.Tk):
         self.help_label.pack()
 
 
+class SettingsWindow(tkinter.Tk):
+    def __init__(self, *args, **kwargs):
+        tkinter.Tk.__init__(self, *args, **kwargs)
+        self.title("Settings")
+        self.resizable(width=False, height=False)
+        self.help_label = tkinter.Label(
+            self, text="TODO: Settings here", justify=tkinter.LEFT
+        )
+        self.help_label.pack()
+
+
 class AppWindow(tkinter.Tk):
     def __init__(self, *args, **kwargs):
         tkinter.Tk.__init__(self, *args, **kwargs)
@@ -438,8 +492,9 @@ class AppWindow(tkinter.Tk):
         self.button_frame = ButtonFrame(self)
         self.button_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
         self.settings_frame = SettingsFrame(self)
-        self.settings_frame.grid(row=0, column=1, sticky=tkinter.NSEW)
         self.filemenu = MenuBar()
+        if SHOW_SETTINGS:
+            self.settings_frame.show_frame()
         # General keybindings
         self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
         self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())

@@ -30,6 +30,7 @@ def main():
     print(f"Logging level set to: {logging_level}")
 
     import modules.app as app
+
     app.run()
 
 

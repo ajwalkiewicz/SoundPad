@@ -9,7 +9,6 @@ import json
 from typing import List, Union
 
 import webbrowser
-from pynput import keyboard
 
 import modules.utils as utils
 from modules.audio import SoundMusic

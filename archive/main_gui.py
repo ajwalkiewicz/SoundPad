@@ -7,7 +7,7 @@ from modules.audio import SoundMusic, BackgroundMusic
 
 __version__ = 1.0
 
-FONT = ('Helvetica', '10')
+FONT = ("Helvetica", "10")
 # BTN_FONT = ('Helvetica', '15')
 LENGTH = 30
 
@@ -18,11 +18,12 @@ sounds_lst = [None for _ in range(BUTTONS_NR)]
 
 
 def open_file(num):
-    initial_directory = os.path.join('sounds')
+    initial_directory = os.path.join("sounds")
     title = "Select A File"
-    file_types = [('wav files', '*.wav'), ('All files', '*.*')]
+    file_types = [("wav files", "*.wav"), ("All files", "*.*")]
     file_path = tkinter.filedialog.askopenfilename(
-        initialdir=initial_directory, title=title, filetypes=file_types)
+        initialdir=initial_directory, title=title, filetypes=file_types
+    )
     if file_path:
         sounds_lst[num] = SoundMusic(file_path)
         _lbl_update(num, file_path)
@@ -85,7 +86,7 @@ def main():
     pygame.mixer.init()
     # Tkinter
     root = tkinter.Tk()
-    root.title('Sound Pad')
+    root.title("Sound Pad")
     root.resizable(width=0, height=0)
 
     # Images
@@ -110,7 +111,7 @@ def main():
     BUTTONS_VALUES = [
         [(tkinter.StringVar(), 7), (tkinter.StringVar(), 8), (tkinter.StringVar(), 9)],
         [(tkinter.StringVar(), 4), (tkinter.StringVar(), 5), (tkinter.StringVar(), 6)],
-        [(tkinter.StringVar(), 1), (tkinter.StringVar(), 2), (tkinter.StringVar(), 3)]
+        [(tkinter.StringVar(), 1), (tkinter.StringVar(), 2), (tkinter.StringVar(), 3)],
     ]
 
     buttons_values_list = [
@@ -138,82 +139,118 @@ def main():
     buttons_list = []
     for row, values in enumerate(BUTTONS_VALUES):
         for col, val in enumerate(values):
-            button = tkinter.Button(left_frame, width=20, height=10, textvariable=val[0],
-                                    command=lambda i=val[1]-1: play_file(i))
+            button = tkinter.Button(
+                left_frame,
+                width=20,
+                height=10,
+                textvariable=val[0],
+                command=lambda i=val[1] - 1: play_file(i),
+            )
             button.grid(row=row, column=col, sticky=tkinter.NSEW)
             buttons_list.append(button)
 
     # Create No. lables
     for no in range(BUTTONS_NR):
         lbl = tkinter.Label(right_middle_frame, text=f"{no+1}. ", font=FONT)
-        lbl.grid(row=no+1, column=0, sticky=tkinter.NSEW)
+        lbl.grid(row=no + 1, column=0, sticky=tkinter.NSEW)
 
     # Create file names lables
     file_names = [tkinter.StringVar() for _ in range(BUTTONS_NR)]
     for var in file_names:
-        var.set("  "*LENGTH)
+        var.set("  " * LENGTH)
 
     for row, text in enumerate(file_names):
-        tkinter.Label(right_middle_frame, textvariable=text, background='white', anchor=tkinter.W, font=FONT).grid(
-            row=row+1, column=1, sticky=tkinter.NSEW)
+        tkinter.Label(
+            right_middle_frame,
+            textvariable=text,
+            background="white",
+            anchor=tkinter.W,
+            font=FONT,
+        ).grid(row=row + 1, column=1, sticky=tkinter.NSEW)
 
     # Create Radio buttons
     values = [tkinter.StringVar() for _ in range(BUTTONS_NR)]
     for _ in values:
         _.set(0)
-    modes = ['sound', 'music']
+    modes = ["sound", "music"]
 
     for row, var in enumerate(values):
         for val, mode in enumerate(modes):
-            tkinter.Radiobutton(right_middle_frame, variable=var,
-                                value=val, text=mode).grid(row=row+1, column=val+2)
+            tkinter.Radiobutton(
+                right_middle_frame, variable=var, value=val, text=mode
+            ).grid(row=row + 1, column=val + 2)
 
     # Create Check Buttons
-    cbtns = [
-        tkinter.Checkbutton(right_middle_frame) for i in range(BUTTONS_NR)
-    ]
+    cbtns = [tkinter.Checkbutton(right_middle_frame) for i in range(BUTTONS_NR)]
     for row, btn in enumerate(cbtns):
-        btn.grid(row=row+1, column=4, sticky=tkinter.NSEW)
+        btn.grid(row=row + 1, column=4, sticky=tkinter.NSEW)
 
     # Create Open File Buttons
     btns_open_file = [
-        tkinter.Button(right_middle_frame, text="Open File", font=FONT, command=lambda i=i: open_file(i)) for i in range(BUTTONS_NR)
+        tkinter.Button(
+            right_middle_frame,
+            text="Open File",
+            font=FONT,
+            command=lambda i=i: open_file(i),
+        )
+        for i in range(BUTTONS_NR)
     ]
     for row, btn in enumerate(btns_open_file):
-        btn.grid(row=row+1, column=5, sticky=tkinter.NSEW)
+        btn.grid(row=row + 1, column=5, sticky=tkinter.NSEW)
 
-     # Create Play Buttons
+    # Create Play Buttons
     btns_play = [
-        tkinter.Button(right_middle_frame, text="Play", image=play_img, width=25, font=FONT, command=lambda i=i: play_file(i)) for i in range(BUTTONS_NR)
+        tkinter.Button(
+            right_middle_frame,
+            text="Play",
+            image=play_img,
+            width=25,
+            font=FONT,
+            command=lambda i=i: play_file(i),
+        )
+        for i in range(BUTTONS_NR)
     ]
     for row, btn in enumerate(btns_play):
-        btn.grid(row=row+1, column=8, sticky=tkinter.NSEW)
+        btn.grid(row=row + 1, column=8, sticky=tkinter.NSEW)
 
     # Create Stop Buttons
     btns_stop = [
-        tkinter.Button(right_middle_frame, text="Stop", image=stop_img, font=FONT, width=25, command=lambda i=i: stop_file(i)) for i in range(BUTTONS_NR)
+        tkinter.Button(
+            right_middle_frame,
+            text="Stop",
+            image=stop_img,
+            font=FONT,
+            width=25,
+            command=lambda i=i: stop_file(i),
+        )
+        for i in range(BUTTONS_NR)
     ]
     for row, btn in enumerate(btns_stop):
-        btn.grid(row=row+1, column=6, sticky=tkinter.NSEW)
+        btn.grid(row=row + 1, column=6, sticky=tkinter.NSEW)
 
-     # Create Pause Buttons
+    # Create Pause Buttons
     btns_pause = [
-        tkinter.Button(right_middle_frame, text="Pause", image=pause_img, width=25, font=FONT, command=lambda i=i: pause_file(i)) for i in range(BUTTONS_NR)
+        tkinter.Button(
+            right_middle_frame,
+            text="Pause",
+            image=pause_img,
+            width=25,
+            font=FONT,
+            command=lambda i=i: pause_file(i),
+        )
+        for i in range(BUTTONS_NR)
     ]
     for row, btn in enumerate(btns_pause):
-        btn.grid(row=row+1, column=7, sticky=tkinter.NSEW)
+        btn.grid(row=row + 1, column=7, sticky=tkinter.NSEW)
 
     # lbl_info = tkinter.Label(
     #     frm_right_up, text="Informaciones", width=50, height=4)
     # lbl_info.grid(row=0, column=0, sticky=tkinter.NSEW)
 
     # Settings
-    btn_apply = tkinter.Button(
-        right_down_frame, text="Apply", font=FONT)
-    btn_open_project = tkinter.Button(
-        right_down_frame, text="Open Project", font=FONT)
-    btn_save_project = tkinter.Button(
-        right_down_frame, text="Save Project", font=FONT)
+    btn_apply = tkinter.Button(right_down_frame, text="Apply", font=FONT)
+    btn_open_project = tkinter.Button(right_down_frame, text="Open Project", font=FONT)
+    btn_save_project = tkinter.Button(right_down_frame, text="Save Project", font=FONT)
 
     btn_apply.grid(row=0, column=2, sticky=tkinter.NSEW)
     btn_open_project.grid(row=0, column=0, sticky=tkinter.NSEW)

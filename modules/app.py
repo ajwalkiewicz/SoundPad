@@ -63,14 +63,14 @@ if system == "win32":
     logging.info(f"System detected: {system}. Use Windows configuration")
     import keyboard
 
-    def keyboard_add_hotkey(hotkey: str, key: int):
+    def _keyboard_add_hotkey(hotkey: str, key: int):
         return keyboard.add_hotkey(hotkey, lambda: SOUNDS_LIST[key].play())
 
 else:
     logging.info(f"System detected: {system}. Use UNIX configuration")
     from pynput import keyboard
 
-    def keyboard_add_hotkey(hotkey: str, key: int):
+    def _keyboard_add_hotkey(hotkey: str, key: int):
         return keyboard.GlobalHotKeys({hotkey: lambda: SOUNDS_LIST[key].play()}).start()
 
 
@@ -81,7 +81,7 @@ def bind_key(key: int, object: tkinter.Tk):
         object.bind(hotkey, lambda event: SOUNDS_LIST[key].play())
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
-        keyboard_add_hotkey(hotkey, key)
+        _keyboard_add_hotkey(hotkey, key)
 
 
 class Button(tkinter.Button):
@@ -108,11 +108,13 @@ class PadButton(Button):
         # self._button_list_sort()
 
     def play(self):
-        logging.info(f"PAD BUTTON pressed, id: {self.nr}")
-        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
-            SOUNDS_LIST[self.nr].play()
+        logging.debug(f"PAD BUTTON pressed, id: {self.nr}")
+        sound = SOUNDS_LIST[self.nr]
+        if isinstance(sound, SoundMusic):
+            sound.play()
+            logging.info(f"PLAY: {sound.path}")
         else:
-            logging.info(f"Empty PAD BUTTON pressed.")
+            logging.debug(f"Empty PAD BUTTON pressed.")
 
     # def _button_list_sort(self):
     #     """Setting buttons in a right order.
@@ -308,7 +310,7 @@ class StopAll(Button):
         super().__init__(frame)
         self.frame = frame
         self["height"] = 2
-        self["text"] = "Stop All"
+        self["text"] = "STOP ALL"
         self["command"] = self.stop_all
 
     def stop_all(self) -> None:
@@ -316,30 +318,24 @@ class StopAll(Button):
         pygame.mixer.stop()
 
 
-class PauseAll(Button):
+class PauseUnpauseAll(Button):
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
         self["height"] = 2
-        self["text"] = "Pause All"
-        self["command"] = self.pause_all
+        self["text"] = "PAUSE ALL"
+        self["command"] = self.pause_unpause_all
+        self.state = True
 
-    def pause_all(self) -> None:
-        logging.info(f"PAUSE ALL BUTTON pressed")
-        pygame.mixer.pause()
-
-
-class UnpauseAll(Button):
-    def __init__(self, frame=None):
-        super().__init__(frame)
-        self.frame = frame
-        self["height"] = 2
-        self["text"] = "Unpause All"
-        self["command"] = self.unpause_all
-
-    def unpause_all(self) -> None:
-        logging.info(f"UNPAUSE ALL BUTTON pressed")
-        pygame.mixer.unpause()
+    def pause_unpause_all(self) -> None:
+        if self.state:
+            logging.info(f"PAUSE ALL")
+            pygame.mixer.pause()
+            self.state = False
+        else:
+            logging.info(f"UNPAUSE ALL")
+            pygame.mixer.unpause()
+            self.state = True
 
 
 class FadeoutAll(Button):
@@ -347,7 +343,7 @@ class FadeoutAll(Button):
         super().__init__(frame)
         self.frame = frame
         self["height"] = 2
-        self["text"] = "Fadeout All"
+        self["text"] = "FADEOUT ALL"
         self["command"] = self.fadeout_all
 
     def fadeout_all(self) -> None:
@@ -443,11 +439,11 @@ class ButtonFrame(tkinter.Frame):
     def create_buttons(self):
         for row, values in self.BUTTONS_VALUES:
             for col, val in values:
-                button = PadButton(self, val)
-                button.grid(row=row, column=col, columnspan=4, sticky=tkinter.NSEW)
+                pad_btn = PadButton(self, val)
+                pad_btn.grid(row=row, column=col, columnspan=4, sticky=tkinter.NSEW)
 
-                btn = OpenButton(self)
-                btn.grid(row=row + 1, column=col, sticky=tkinter.NSEW)
+                open_btn = OpenButton(self)
+                open_btn.grid(row=row + 1, column=col, sticky=tkinter.NSEW)
 
                 stop_btn = StopButton(self)
                 stop_btn.grid(row=row + 1, column=col + 1, sticky=tkinter.NSEW)
@@ -457,6 +453,15 @@ class ButtonFrame(tkinter.Frame):
 
                 play_btn = PlayButton(self)
                 play_btn.grid(row=row + 1, column=col + 3, sticky=tkinter.NSEW)
+
+        stop_all_btn = StopAll(self)
+        stop_all_btn.grid(row=7, column=1, columnspan=4, sticky=tkinter.NSEW)
+
+        pause_unpause_all_btn = PauseUnpauseAll(self)
+        pause_unpause_all_btn.grid(row=7, column=6, columnspan=4, sticky=tkinter.NSEW)
+
+        fadeout_all_btn = FadeoutAll(self)
+        fadeout_all_btn.grid(row=7, column=10, columnspan=4, sticky=tkinter.NSEW)
 
 
 class SettingsFrame(tkinter.Frame):
@@ -470,9 +475,8 @@ class SettingsFrame(tkinter.Frame):
 
     def create_buttons(self):
         StopAll(self).grid(row=0)
-        PauseAll(self).grid(row=1)
-        UnpauseAll(self).grid(row=2)
-        FadeoutAll(self).grid(row=3)
+        PauseUnpauseAll(self).grid(row=1)
+        FadeoutAll(self).grid(row=2)
 
     def show_frame(self):
         logging.debug(f"Show settings frame")

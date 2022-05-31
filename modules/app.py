@@ -50,7 +50,9 @@ stop_img_path = "images/media-stop-2x.png"
 pause_img_path = "images/media-pause-2x.png"
 play_img_path = "images/media-play-2x.png"
 
-with open(os.path.join(_THIS_FOLDER, "data", "settings.json"), "r") as json_file:
+SETTINGS = os.path.join(_THIS_FOLDER, "data", "settings.json")
+
+with open(SETTINGS, "r") as json_file:
     settings: dict = json.load(json_file)
     DEFAULT_DIRECTORY: str = settings["default_directory"]
     NUM_CHANNELS: int = settings["num_channels"]
@@ -66,12 +68,18 @@ if system == "win32":
     def _keyboard_add_hotkey(hotkey: str, key: int):
         return keyboard.add_hotkey(hotkey, lambda: SOUNDS_LIST[key].play())
 
+    def _open_settings():
+        os.system(f"notepad.exe {SETTINGS}")
+
 else:
     logging.info(f"System detected: {system}. Use UNIX configuration")
     from pynput import keyboard
 
     def _keyboard_add_hotkey(hotkey: str, key: int):
         return keyboard.GlobalHotKeys({hotkey: lambda: SOUNDS_LIST[key].play()}).start()
+
+    def _open_settings():
+        os.system(f"xdg-open {SETTINGS}")
 
 
 def bind_key(key: int, object: tkinter.Tk):
@@ -82,6 +90,60 @@ def bind_key(key: int, object: tkinter.Tk):
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
         _keyboard_add_hotkey(hotkey, key)
+
+
+class VolumeBar(tkinter.Scale):
+    volume_bar_list = []
+
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.nr = len(self.volume_bar_list)
+        self["width"] = 15
+        self["orient"] = tkinter.VERTICAL
+        self["from_"] = 1
+        self["to"] = 0
+        self["resolution"] = 0.01
+        self["showvalue"] = 0
+        self["sliderlength"] = 30
+        self["command"] = self.set_sound_volume
+        # self.set(0.50)
+        self.volume_bar_list.append(self)
+
+    def set_sound_volume(self, value):
+        logging.debug(f"Volume set to: {value}")
+        sound = SOUNDS_LIST[self.nr]
+        if isinstance(sound, SoundMusic):
+            sound.set_volume(float(value))
+            logging.debug(f"VOLUMEBAR: volume set to: {value}")
+        else:
+            logging.debug(f"VOLUMEBAR: no sound")
+
+
+class LoopCheckBox(tkinter.Checkbutton):
+    loop_check_box_list = []
+
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.nr = len(self.loop_check_box_list)
+        self.var = tkinter.IntVar()
+        self["width"] = 1
+        self["command"] = self.check
+        self["variable"] = self.var
+        self["onvalue"] = -1
+        self["offvalue"] = 0
+        fake_icon = tkinter.PhotoImage(width=6, height=15)
+        self["image"] = fake_icon
+        self.image = fake_icon
+        self.loop_check_box_list.append(self)
+
+    def check(self):
+        logging.debug(f"CHECKBOX checked, id: {self.nr}")
+        sound = SOUNDS_LIST[self.nr]
+        if isinstance(sound, SoundMusic):
+            sound.is_looped = self.var.get()
+            logging.info(f"CHECKBOX value: {self.var.get()}")
+        else:
+            logging.debug(f"CHECKBOX: Empty button")
 
 
 class Button(tkinter.Button):
@@ -309,6 +371,7 @@ class StopAll(Button):
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
+        self["width"] = 20
         self["height"] = 2
         self["text"] = "STOP ALL"
         self["command"] = self.stop_all
@@ -322,6 +385,7 @@ class PauseUnpauseAll(Button):
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
+        self["width"] = 20
         self["height"] = 2
         self["text"] = "PAUSE ALL"
         self["command"] = self.pause_unpause_all
@@ -342,6 +406,7 @@ class FadeoutAll(Button):
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
+        self["width"] = 20
         self["height"] = 2
         self["text"] = "FADEOUT ALL"
         self["command"] = self.fadeout_all
@@ -377,7 +442,8 @@ class File(MenuBar):
     def file_menu(self):
         self.add_command(label="Open Project", command=OpenProjectButton.open_project)
         self.add_command(label="Save Project", command=SaveProjectButton.save_project)
-        self.add_command(label="Settigns", command=SettingsWindow)
+        # self.add_command(label="Settigns", command=SettingsWindow)
+        self.add_command(label="Settigns", command=_open_settings)
         self.add_separator()
 
 
@@ -426,9 +492,9 @@ class Help(MenuBar):
 
 class ButtonFrame(tkinter.Frame):
     BUTTONS_VALUES = [
-        (1, [(1, 7), (6, 8), (10, 9)]),
-        (3, [(1, 4), (6, 5), (10, 6)]),
-        (5, [(1, 1), (6, 2), (10, 3)]),
+        (1, [(1, 7), (6, 8), (11, 9)]),
+        (3, [(1, 4), (6, 5), (11, 6)]),
+        (5, [(1, 1), (6, 2), (11, 3)]),
     ]
 
     def __init__(self, master=None):
@@ -442,6 +508,9 @@ class ButtonFrame(tkinter.Frame):
                 pad_btn = PadButton(self, val)
                 pad_btn.grid(row=row, column=col, columnspan=4, sticky=tkinter.NSEW)
 
+                volume_bar = VolumeBar(self)
+                volume_bar.grid(row=row, column=col + 4, sticky=tkinter.NSEW)
+
                 open_btn = OpenButton(self)
                 open_btn.grid(row=row + 1, column=col, sticky=tkinter.NSEW)
 
@@ -454,14 +523,17 @@ class ButtonFrame(tkinter.Frame):
                 play_btn = PlayButton(self)
                 play_btn.grid(row=row + 1, column=col + 3, sticky=tkinter.NSEW)
 
+                loop_check_box = LoopCheckBox(self)
+                loop_check_box.grid(row=row + 1, column=col + 4, sticky=tkinter.NSEW)
+
         stop_all_btn = StopAll(self)
-        stop_all_btn.grid(row=7, column=1, columnspan=4, sticky=tkinter.NSEW)
+        stop_all_btn.grid(row=7, column=1, columnspan=5, sticky=tkinter.NSEW)
 
         pause_unpause_all_btn = PauseUnpauseAll(self)
-        pause_unpause_all_btn.grid(row=7, column=6, columnspan=4, sticky=tkinter.NSEW)
+        pause_unpause_all_btn.grid(row=7, column=6, columnspan=5, sticky=tkinter.NSEW)
 
         fadeout_all_btn = FadeoutAll(self)
-        fadeout_all_btn.grid(row=7, column=10, columnspan=4, sticky=tkinter.NSEW)
+        fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
 
 
 class SettingsFrame(tkinter.Frame):

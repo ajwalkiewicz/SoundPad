@@ -18,12 +18,13 @@ class SoundMusic:
         self.sound = pygame.mixer.Sound(self.path)
         self.id = sound_id
         self.state = 1
+        self.is_looped = 0
         # SoundMusic.channel_list.append(self)
         self.channel = pygame.mixer.Channel(self.id)
         logging.debug(f"Initialize Sound object, path: {self.path}, id: {self.id}")
 
     def play(self):
-        self.channel.play(self.sound)
+        self.channel.play(self.sound, loops=self.is_looped)
         self.state = 1
         logging.debug(f"Sound played, id: {self.id}, path: {self.path}")
 
@@ -48,6 +49,11 @@ class SoundMusic:
     def fadeout(self, miliseconds: int):
         self.channel.fadeout(miliseconds)
         logging.debug(f"Sound fadeout, {miliseconds}, id: {self.id}, path: {self.path}")
+
+    def set_volume(self, volume: float):
+        self.sound.set_volume(volume)
+        logging.debug(f"Sound volume set to: {volume}")
+
 
 # TODO:
 # set volume

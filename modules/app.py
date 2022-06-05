@@ -6,7 +6,7 @@ import os
 import sys
 import logging
 import json
-from typing import List, Union
+from typing import List, Tuple, Dict, Union
 
 import webbrowser
 from pynput import keyboard
@@ -16,10 +16,10 @@ from modules.audio import SoundMusic
 
 _THIS_FOLDER: str = os.path.dirname(os.path.abspath(__file__))
 
-FONT: tuple = ("Helvetica", "10")
+FONT: Tuple[str, str] = ("Helvetica", "10")
 NUMBER_OF_BUTTONS: int = 9
 
-SYSTEM_WIDE_KEY_MAPPING = {
+SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
     1: "7",
     2: "8",
     3: "9",
@@ -31,7 +31,7 @@ SYSTEM_WIDE_KEY_MAPPING = {
     9: "3",
 }
 
-INSIDE_APP_KEY_MAPPING = {
+INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
     1: "<KP_7>",
     2: "<KP_8>",
     3: "<KP_9>",
@@ -44,7 +44,9 @@ INSIDE_APP_KEY_MAPPING = {
 }
 
 global global_list_of_sounds
-global_list_of_sounds: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
+global_list_of_sounds: List[Union[SoundMusic, None]] = [
+    None for _ in range(NUMBER_OF_BUTTONS)
+]
 
 github: str = "https://github.com/ajwalkiewicz/SoundPad"
 
@@ -60,36 +62,38 @@ with open(SETTINGS, "r") as json_file:
     DEFAULT_DIRECTORY: str = settings["default_directory"]
     NUM_CHANNELS: int = settings["num_channels"]
     KEY_RANGE: str = settings["key_range"]
-    FONT: tuple = (settings["font_type"], settings["font_size"])
+    FONT: Tuple[str, str] = (settings["font_type"], settings["font_size"])
     SHOW_SETTINGS: bool = settings["show_settings"]
 
-SYSTEM = sys.platform
+SYSTEM: str = sys.platform
 if SYSTEM == "win32":
     logging.info(f"Detected system: {SYSTEM}. Use Windows configuration")
 else:
     logging.info(f"Detected system: {SYSTEM}. Use UNIX configuration")
 
 
-def open_settings() -> int:
-    if SYSTEM == "win32":
-        command = f"notepad.exe {SETTINGS}"
+def open_settings(system: str = SYSTEM) -> int:
+    if system == "win32":
+        command = SETTINGS
     else:
         command = f"xdg-open {SETTINGS}"
     return os.system(command)
 
 
-def bind_key(key: int, object: tkinter.Tk):
+def bind_key(key: int, object: tkinter.Tk) -> None:
     logging.debug(f"Bind key: {key}")
     if KEY_RANGE == "inside_app":
         hotkey = INSIDE_APP_KEY_MAPPING.get(key + 1, "0")
         object.bind(hotkey, lambda event: global_list_of_sounds[key].play())
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
-        keyboard.GlobalHotKeys({hotkey: lambda: global_list_of_sounds[key].play()}).start()
+        keyboard.GlobalHotKeys(
+            {hotkey: lambda: global_list_of_sounds[key].play()}
+        ).start()
 
 
 class VolumeBar(tkinter.Scale):
-    volume_bar_list = []
+    volume_bar_list: list = []
 
     def __init__(self, master=None):
         super().__init__(master)
@@ -116,7 +120,7 @@ class VolumeBar(tkinter.Scale):
 
 
 class LoopCheckBox(tkinter.Checkbutton):
-    loop_check_box_list = []
+    loop_check_box_list: list = []
 
     def __init__(self, master=None):
         super().__init__(master)
@@ -151,7 +155,7 @@ class Button(tkinter.Button):
 
 
 class PadButton(Button):
-    buttons_list = []
+    buttons_list: list = []
 
     def __init__(self, master=None, nr=None):
         super().__init__(master)
@@ -187,7 +191,7 @@ class PadButton(Button):
 
 
 class OpenButton(Button):
-    buttons_list = []
+    buttons_list: list = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -218,7 +222,7 @@ class OpenButton(Button):
 
 
 class StopButton(Button):
-    buttons_list = []
+    buttons_list: list = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -239,7 +243,7 @@ class StopButton(Button):
 
 
 class PauseButton(Button):
-    buttons_list = []
+    buttons_list: list = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -252,14 +256,14 @@ class PauseButton(Button):
         self.image = icon
         self.buttons_list.append(self)
 
-    def pause(self):
+    def pause(self) -> None:
         logging.info(f"PAUSE BUTTON pressed, id: {self.nr}")
         if isinstance(global_list_of_sounds[self.nr], SoundMusic):
             global_list_of_sounds[self.nr].play_pause()
 
 
 class PlayButton(Button):
-    buttons_list = []
+    buttons_list: list = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -272,7 +276,7 @@ class PlayButton(Button):
         self.image = icon
         self.buttons_list.append(self)
 
-    def play(self):
+    def play(self) -> None:
         logging.info(f"PLAY BUTTON pressed, id: {self.nr}")
         if isinstance(global_list_of_sounds[self.nr], SoundMusic):
             global_list_of_sounds[self.nr].play()
@@ -286,7 +290,7 @@ class SaveProjectButton(Button):
         self["command"] = self.save_project
 
     @staticmethod
-    def save_project():
+    def save_project() -> None:
         logging.info(f"SAVE PROJECT selected")
         initial_directory = os.path.join(".")
         title = "Save Project"
@@ -322,7 +326,7 @@ class OpenProjectButton(Button):
         self["command"] = self.open_project
 
     @staticmethod
-    def open_project():
+    def open_project() -> None:
         logging.info(f"OPEN PROJECT selected")
         initial_directory = os.path.join(".")
         title = "Select Project"
@@ -424,21 +428,22 @@ class MenuBar(tkinter.Menu):
         tkinter.Menu.__init__(self)
         self.create_file_menu()
 
-    def create_file_menu(self):
+    def create_file_menu(self) -> None:
         self.add_cascade(label="File", menu=File())
-        self.add_cascade(label="View", menu=View())
+        # Waiting for more options to put in menu bar
+        # self.add_cascade(label="View", menu=View())
         self.add_cascade(label="Help", menu=Help())
 
 
 class File(MenuBar):
-    file_list = []
+    file_list: list = []
 
     def __init__(self):
         tkinter.Menu.__init__(self, tearoff=0)
         self.file_menu()
         self.file_list.append(self)
 
-    def file_menu(self):
+    def file_menu(self) -> None:
         self.add_command(label="Open Project", command=OpenProjectButton.open_project)
         self.add_command(label="Save Project", command=SaveProjectButton.save_project)
         # self.add_command(label="Settigns", command=SettingsWindow)
@@ -447,6 +452,10 @@ class File(MenuBar):
 
 
 class View(MenuBar):
+    """View menu bar
+    Currently not used. Waiting for more options to be put here.
+    """
+
     def __init__(self):
         tkinter.Menu.__init__(self, tearoff=0)
         self.settings_state = SHOW_SETTINGS
@@ -536,7 +545,7 @@ class ButtonFrame(tkinter.Frame):
 
 
 class SettingsFrame(tkinter.Frame):
-    settings_frame_list = []
+    settings_frame_list: list = []
 
     def __init__(self, master=None):
         tkinter.Frame.__init__(self, master)

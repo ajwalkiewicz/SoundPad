@@ -2,9 +2,8 @@ import pygame
 import os
 import logging
 
-Channel: pygame.mixer.Channel
 Sound: pygame.mixer.Sound
-
+Channel: pygame.mixer.Channel
 
 class SoundMusic:
     """
@@ -13,15 +12,13 @@ class SoundMusic:
     to control music.
     """
 
-    id = 0
-
     def __init__(self, file: str, sound_id: int):
         self.path: str = os.path.join(file)
         self.sound: Sound = pygame.mixer.Sound(self.path)
         self.id: int = sound_id
         self.state: int = 1
         self.is_looped: int = 0
-        self.length: int = self.sound.get_length()  # In seconds
+        self.length: float = self.sound.get_length()  # In seconds
         self.channel: Channel = pygame.mixer.Channel(self.id)
         logging.debug(f"Initialize Sound object, path: {self.path}, id: {self.id}")
 

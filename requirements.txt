@@ -1,4 +1,2 @@
-keyboard=0.13.5
-pynput=1.7.6
-pygame=2.1.2
-six=1.16.0
+pynput==1.7.6
+pygame==2.1.2

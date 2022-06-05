@@ -9,15 +9,15 @@ import json
 from typing import List, Union
 
 import webbrowser
+from pynput import keyboard
 
 import modules.utils as utils
 from modules.audio import SoundMusic
 
-_THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+_THIS_FOLDER: str = os.path.dirname(os.path.abspath(__file__))
 
-FONT = ("Helvetica", "10")
-NUMBER_OF_BUTTONS = 9
-SOUNDS_LIST: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
+FONT: tuple = ("Helvetica", "10")
+NUMBER_OF_BUTTONS: int = 9
 
 SYSTEM_WIDE_KEY_MAPPING = {
     1: "7",
@@ -43,14 +43,17 @@ INSIDE_APP_KEY_MAPPING = {
     9: "<KP_3>",
 }
 
-github = "https://github.com/ajwalkiewicz/sound-pad"
+global global_list_of_sounds
+global_list_of_sounds: List[Union[SoundMusic, None]] = [None for _ in range(NUMBER_OF_BUTTONS)]
 
-open_img_path = "images/folder-2x.png"
-stop_img_path = "images/media-stop-2x.png"
-pause_img_path = "images/media-pause-2x.png"
-play_img_path = "images/media-play-2x.png"
+github: str = "https://github.com/ajwalkiewicz/SoundPad"
 
-SETTINGS = os.path.join(_THIS_FOLDER, "data", "settings.json")
+open_img_path: str = "images/folder-2x.png"
+stop_img_path: str = "images/media-stop-2x.png"
+pause_img_path: str = "images/media-pause-2x.png"
+play_img_path: str = "images/media-play-2x.png"
+
+SETTINGS: str = os.path.join(_THIS_FOLDER, "data", "settings.json")
 
 with open(SETTINGS, "r") as json_file:
     settings: dict = json.load(json_file)
@@ -60,36 +63,29 @@ with open(SETTINGS, "r") as json_file:
     FONT: tuple = (settings["font_type"], settings["font_size"])
     SHOW_SETTINGS: bool = settings["show_settings"]
 
-system = sys.platform
-if system == "win32":
-    logging.info(f"System detected: {system}. Use Windows configuration")
-    import keyboard
-
-    def _keyboard_add_hotkey(hotkey: str, key: int):
-        return keyboard.add_hotkey(hotkey, lambda: SOUNDS_LIST[key].play())
-
-    def _open_settings():
-        os.system(f"notepad.exe {SETTINGS}")
-
+SYSTEM = sys.platform
+if SYSTEM == "win32":
+    logging.info(f"Detected system: {SYSTEM}. Use Windows configuration")
 else:
-    logging.info(f"System detected: {system}. Use UNIX configuration")
-    from pynput import keyboard
+    logging.info(f"Detected system: {SYSTEM}. Use UNIX configuration")
 
-    def _keyboard_add_hotkey(hotkey: str, key: int):
-        return keyboard.GlobalHotKeys({hotkey: lambda: SOUNDS_LIST[key].play()}).start()
 
-    def _open_settings():
-        os.system(f"xdg-open {SETTINGS}")
+def open_settings() -> int:
+    if SYSTEM == "win32":
+        command = f"notepad.exe {SETTINGS}"
+    else:
+        command = f"xdg-open {SETTINGS}"
+    return os.system(command)
 
 
 def bind_key(key: int, object: tkinter.Tk):
     logging.debug(f"Bind key: {key}")
     if KEY_RANGE == "inside_app":
         hotkey = INSIDE_APP_KEY_MAPPING.get(key + 1, "0")
-        object.bind(hotkey, lambda event: SOUNDS_LIST[key].play())
+        object.bind(hotkey, lambda event: global_list_of_sounds[key].play())
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
-        _keyboard_add_hotkey(hotkey, key)
+        keyboard.GlobalHotKeys({hotkey: lambda: global_list_of_sounds[key].play()}).start()
 
 
 class VolumeBar(tkinter.Scale):
@@ -106,12 +102,12 @@ class VolumeBar(tkinter.Scale):
         self["showvalue"] = 0
         self["sliderlength"] = 30
         self["command"] = self.set_sound_volume
-        # self.set(0.50)
+        # self.set(0.50) # If you want to have default value
         self.volume_bar_list.append(self)
 
     def set_sound_volume(self, value):
         logging.debug(f"Volume set to: {value}")
-        sound = SOUNDS_LIST[self.nr]
+        sound = global_list_of_sounds[self.nr]
         if isinstance(sound, SoundMusic):
             sound.set_volume(float(value))
             logging.debug(f"VOLUMEBAR: volume set to: {value}")
@@ -138,7 +134,7 @@ class LoopCheckBox(tkinter.Checkbutton):
 
     def check(self):
         logging.debug(f"CHECKBOX checked, id: {self.nr}")
-        sound = SOUNDS_LIST[self.nr]
+        sound = global_list_of_sounds[self.nr]
         if isinstance(sound, SoundMusic):
             sound.is_looped = self.var.get()
             logging.info(f"CHECKBOX value: {self.var.get()}")
@@ -166,18 +162,20 @@ class PadButton(Button):
         self["height"] = 10
         self["command"] = self.play
         self["text"] = str(nr)
+        self["wraplength"] = self["width"] * 10
         PadButton.buttons_list.append(self)
         # self._button_list_sort()
 
     def play(self):
         logging.debug(f"PAD BUTTON pressed, id: {self.nr}")
-        sound = SOUNDS_LIST[self.nr]
+        sound = global_list_of_sounds[self.nr]
         if isinstance(sound, SoundMusic):
             sound.play()
             logging.info(f"PLAY: {sound.path}")
         else:
             logging.debug(f"Empty PAD BUTTON pressed.")
 
+    # I'm keeping this in case one day I'd like to sort button list
     # def _button_list_sort(self):
     #     """Setting buttons in a right order.
     #     From this order: [0,1,2,3,4,5,6,7,8]
@@ -213,7 +211,7 @@ class OpenButton(Button):
             initialdir=initial_directory, title=title, filetypes=file_types
         )
         if self.file_path:
-            SOUNDS_LIST[self.nr] = SoundMusic(self.file_path, self.nr)
+            global_list_of_sounds[self.nr] = SoundMusic(self.file_path, self.nr)
             bind_key(self.nr, self.master.master)
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
@@ -236,8 +234,8 @@ class StopButton(Button):
 
     def stop_file(self):
         logging.info(f"STOP BUTTON pressed, id: {self.nr}")
-        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
-            SOUNDS_LIST[self.nr].stop()
+        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
+            global_list_of_sounds[self.nr].stop()
 
 
 class PauseButton(Button):
@@ -256,8 +254,8 @@ class PauseButton(Button):
 
     def pause(self):
         logging.info(f"PAUSE BUTTON pressed, id: {self.nr}")
-        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
-            SOUNDS_LIST[self.nr].play_pause()
+        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
+            global_list_of_sounds[self.nr].play_pause()
 
 
 class PlayButton(Button):
@@ -276,8 +274,8 @@ class PlayButton(Button):
 
     def play(self):
         logging.info(f"PLAY BUTTON pressed, id: {self.nr}")
-        if isinstance(SOUNDS_LIST[self.nr], SoundMusic):
-            SOUNDS_LIST[self.nr].play()
+        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
+            global_list_of_sounds[self.nr].play()
 
 
 class SaveProjectButton(Button):
@@ -334,31 +332,32 @@ class OpenProjectButton(Button):
         )
 
         if file_path:
-            # if keyboard._hotkeys:
-            # keyboard.remove_all_hotkeys()
-
             for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
                 PadButton.buttons_list[position].config(text=str(text))
-                SOUNDS_LIST[position] = None
+                # global_list_of_sounds[position] = None
 
-            with open(file_path, "r") as read_file:
-                data = json.loads(read_file.read())
-                files_not_found_list = []
-                for key, item in data.items():
-                    if item is not None:
+            with open(file_path, "r") as settings_file:
+                settings: dict = json.loads(settings_file.read())
+                files_not_found_list: list = []
+                for file_id, file_path in settings.items():
+                    if file_path:
                         try:
-                            SOUNDS_LIST[int(key)] = SoundMusic(item, int(key))
-                            pad_button_text = os.path.split(item)[1]
-                            # OpenButton.buttons_list[int(key)].bind_key(int(key))
-                            bind_key(
-                                int(key),
-                                OpenButton.buttons_list[int(key)].master.master,
+                            global_list_of_sounds[int(file_id)] = SoundMusic(
+                                file_path, int(file_id)
                             )
-                            PadButton.buttons_list[int(key)].config(
+                            pad_button_text = os.path.split(file_path)[1]
+                            bind_key(
+                                int(file_id),
+                                OpenButton.buttons_list[int(file_id)].master.master,
+                            )
+                            PadButton.buttons_list[int(file_id)].config(
                                 text=pad_button_text
                             )
                         except FileNotFoundError:
-                            files_not_found_list.append(item)
+                            files_not_found_list.append(file_path)
+                            logging.exception(f"File not found: {file_path}")
+                    else:
+                        global_list_of_sounds[int(file_id)] = None
 
             if files_not_found_list:
                 message = "The following files could not be found: \n"
@@ -443,7 +442,7 @@ class File(MenuBar):
         self.add_command(label="Open Project", command=OpenProjectButton.open_project)
         self.add_command(label="Save Project", command=SaveProjectButton.save_project)
         # self.add_command(label="Settigns", command=SettingsWindow)
-        self.add_command(label="Settigns", command=_open_settings)
+        self.add_command(label="Settigns", command=open_settings)
         self.add_separator()
 
 

@@ -2,9 +2,9 @@ from distutils import log
 import logging
 import sys
 
-__version__ = 3.0
+__version__ = 3.1
 __author__ = "Adam Walkiewicz"
-github = "https://github.com/ajwalkiewicz/sound-pad"
+github = "https://github.com/ajwalkiewicz/SoundPad"
 
 DEFAULT_LOGGING_LEVEL = logging.ERROR
 

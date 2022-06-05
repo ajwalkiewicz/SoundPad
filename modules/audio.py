@@ -2,25 +2,27 @@ import pygame
 import os
 import logging
 
+Channel: pygame.mixer.Channel
+Sound: pygame.mixer.Sound
+
 
 class SoundMusic:
     """
     SoundMucic is an object that combines both
-    pygame.miser.Sound and pygame.mixer.Channel
+    pygame.mixer.Sound and pygame.mixer.Channel
     to control music.
     """
 
-    # channel_list = []
     id = 0
 
-    def __init__(self, file, sound_id: int):
-        self.path = os.path.join(file)
-        self.sound = pygame.mixer.Sound(self.path)
-        self.id = sound_id
-        self.state = 1
-        self.is_looped = 0
-        # SoundMusic.channel_list.append(self)
-        self.channel = pygame.mixer.Channel(self.id)
+    def __init__(self, file: str, sound_id: int):
+        self.path: str = os.path.join(file)
+        self.sound: Sound = pygame.mixer.Sound(self.path)
+        self.id: int = sound_id
+        self.state: int = 1
+        self.is_looped: int = 0
+        self.length: int = self.sound.get_length()  # In seconds
+        self.channel: Channel = pygame.mixer.Channel(self.id)
         logging.debug(f"Initialize Sound object, path: {self.path}, id: {self.id}")
 
     def play(self):
@@ -50,11 +52,13 @@ class SoundMusic:
         self.channel.fadeout(miliseconds)
         logging.debug(f"Sound fadeout, {miliseconds}, id: {self.id}, path: {self.path}")
 
-    def set_volume(self, volume: float):
-        self.sound.set_volume(volume)
-        logging.debug(f"Sound volume set to: {volume}")
+    def set_volume(self, new_volume: float):
+        self.sound.set_volume(new_volume)
+        logging.debug(
+            f"Sound volume set to: {new_volume}, id: {self.id}, path: {self.path}"
+        )
 
 
 # TODO:
-# set volume
-# get length
+# [x] set volume
+# [ ] get length

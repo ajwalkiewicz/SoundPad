@@ -6,11 +6,11 @@ As a big fun of tabletop RPGs and the game master I felt the urge to have such a
 
 So I created it.
 
-It was also my side project while I was learning python. That is why some more advanced in python people may find totally unnecessary pieces of code in the source code, eg. abstract base class in audio module.
+It was also my side project while I was learning python. That is why some more advanced in python people may find totally unnecessary pieces of code in the source code, ~~eg. abstract base class in audio module.~~
 
 I am aware of that, but I am not going to change this as I believe that it is better to have program with some mistakes in the code then to have a perfect program that does not exist.
 
-Please Notice that the program is still during the development process, therefore some feature may not work properly or at all, eg. pause button. 
+Please Notice that the program is still during the development process, therefore some feature may not work properly or at all, ~~eg. pause button.~~
 
 If you are among the people that also need such a program please feel welcome to use it.
 
@@ -18,58 +18,56 @@ If you are among the people that also need such a program please feel welcome to
 
 - [About Project](#simple-sound-pad)
 - [Table of Contents](#table-of-contents)
-- [Getting Started](#getting-started)
+- [Installation](#installation)
 - [Usage](#usage)
 - [Build With](#built-with)
 - [TODO](#todo)
 - [Author](#authors)
 - [License](#license)
 
-## Getting Started
+## Installation
 
 ### Prerequisites
 
-*  [Python 3.6](https://www.python.org/download/releases/3.0/) or higher.
-*  [pip](https://pip.pypa.io/en/stable/) - python package installer
+* [Python 3.6](https://www.python.org/download/releases/3.0/) or higher.
+* [pip](https://pip.pypa.io/en/stable/) - python package installer
+* [git](https://git-scm.com/) - version control system
 
-#### Ubuntu
+### Steps
 
-Necessery libraries:
+1. Clone repository
+```Bash
+git clone https://github.com/ajwalkiewicz/SoundPad.git
 ```
-python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
-```
+2. Go to the created directory
+3. Follow steps for your operating system
 
-Install
-```bash
-sudo apt install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
-```
-  
-### Installing
+### Windows
 
-1. Clone or download repository
-2. In the downloaded loaction run the following commands:
-
-#### Windows
-
-```bash
+4. Install python dependencies
+```Bash
 pip install -r requirements.txt
 ```
 
-To run the program type:
-
-```bash
+5. Run program
+```Bash
 python soundpad.py
 ```
 
-#### Linux
+### Linux
 
+4. Install necessary libraries (Ubuntu)
 ```bash
+sudo apt install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
+```
+
+5. Install python dependencies
+```Bash
 pip3 install -r requirements.txt
 ```
 
-To run the program type:
-
-```
+6. Run program
+```Bash
 python3 soundpad.py
 ```
 
@@ -89,7 +87,7 @@ python3 soundpad.py
 
 Settings can be change in: `module/data/settings/json`
 
-```json
+```JSON
 {
     "default_directory": "samples", 
     "key_range": "system_wide",    // or "inside_app"
@@ -126,12 +124,13 @@ Settings can be change in: `module/data/settings/json`
 
 - [x] Play-pause feature.
 - [x] Set the volume of each audio track individally.
+- [ ] Saves include volume and loop status
 - [ ] Show the progress of the each audio track.
 - [ ] Looping files doesn't require playing sound again 
 
 ## Author
 
-* **Adam Walkiewicz**
+**Adam Walkiewicz**
 
 ## License
 

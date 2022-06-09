@@ -3,6 +3,6 @@
     "key_range": "system_wide",
     "font_type": "Helvetica",
     "font_size": 10,
-    "show_settings": true,
+    "show_settings": false,
     "fadeout_length": 2000
 }

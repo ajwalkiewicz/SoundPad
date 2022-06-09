@@ -52,7 +52,7 @@ class SoundMusic:
 
     def set_volume(self, new_volume: float):
         self.sound.set_volume(new_volume)
-        self.channel.set_volume(1)  # volume equals: new_volume * (1 + new_volume)
+        self.channel.set_volume(1)  # volume equals: new_volume * 1
         logging.debug(
             f"VOLUME: {self} set to: {new_volume}"
         )

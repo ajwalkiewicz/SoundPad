@@ -63,6 +63,7 @@ with open(SETTINGS, "r") as json_file:
     KEY_RANGE: str = settings["key_range"]
     FONT: Tuple[str, str] = (settings["font_type"], settings["font_size"])
     SHOW_SETTINGS: bool = settings["show_settings"]
+    FADEOUT_LENGTH: int = settings["fadeout_length"]
 
 SYSTEM: str = sys.platform
 if SYSTEM == "win32":
@@ -412,17 +413,18 @@ class PauseUnpauseAll(Button):
 
 
 class FadeoutAll(Button):
-    def __init__(self, frame=None):
+    def __init__(self, frame=None, value=FADEOUT_LENGTH):
         super().__init__(frame)
         self.frame = frame
+        self.value = value  # milisecond
         self["width"] = 20
         self["height"] = 2
         self["text"] = "FADEOUT ALL"
         self["command"] = self.fadeout_all
 
     def fadeout_all(self) -> None:
-        logging.info(f"FADEOUT ALL BUTTON pressed")
-        pygame.mixer.fadeout(2000)
+        logging.info(f"FADEOUT ALL BUTTON pressed, value: {self.value}")
+        pygame.mixer.fadeout(self.value)
 
 
 # Get rid of Menu classes, and put them in a AppWindow

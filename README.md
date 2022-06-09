@@ -14,6 +14,17 @@ Please Notice that the program is still during the development process, therefor
 
 If you are among the people that also need such a program please feel welcome to use it.
 
+## Table of Contents
+
+- [About Project](#simple-sound-pad)
+- [Table of Contents](#table-of-contents)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+- [Build With](#built-with)
+- [TODO](#todo)
+- [Author](#authors)
+- [License](#license)
+
 ## Getting Started
 
 ### Prerequisites
@@ -23,12 +34,13 @@ If you are among the people that also need such a program please feel welcome to
 
 #### Ubuntu
 
-Necessery libraries 
-
+Necessery libraries:
+```
 python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
+```
 
 Install
-```
+```bash
 sudo apt install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev libfreetype6-dev
 ```
   
@@ -37,51 +49,87 @@ sudo apt install python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.
 1. Clone or download repository
 2. In the downloaded loaction run the following commands:
 
-##### On Windows
+#### Windows
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
 To run the program type:
 
-```
-python main.py
+```bash
+python soundpad.py
 ```
 
-##### On Linux
+#### Linux
 
-```
+```bash
 pip3 install -r requirements.txt
 ```
 
 To run the program type:
 
 ```
-python3 main.py
+python3 soundpad.py
 ```
 
 ## Usage
 
 ![Screenshot image](https://github.com/ajwalkiewicz/sound-pad/blob/master/image.png)
 
-This section will be updated soon
+### Features
+
+1. 9 different sound tracks
+2. Each track can be controlled separatly
+3. Key bindings for each track
+4. Saving projects
+
+
+### Settings
+
+Settings can be change in: `module/data/settings/json`
+
+```json
+{
+    "default_directory": "samples", 
+    "key_range": "system_wide",    // or "inside_app"
+    "font_type": "Helvetica",
+    "font_size": 10,
+    "show_settings": false,        // DEPRECATED
+    "fadeout_length": 2000         // fadeout in miliseconds    
+}
+```
+
+### Limitations
+
+#### Windows
+
+- Only `"key_range": "system_wide"` works.
+
+#### Mac OS
+
+- Not supported.
+
+#### Linux
+
+- `"key_range": "inside_app"` works only with numerical keyboard.
 
 ## Built With
 
 * [Pygame](https://www.pygame.org/docs/) - set of Python modules designed for writing video games
 * [Tkinter](https://docs.python.org/3/library/tk.html) - Python module for GUI
-* [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control (used in windows version)
-* [pynput](https://pypi.org/project/pynput/) - Python library for keyboard control (Used in Linux verison)
+* [keyboard](https://pypi.org/project/keyboard/) - Python library for keyboard control
+* [pynput](https://pypi.org/project/pynput/) - Python library for keyboard control 
 * [Open Iconic v1.1.1](https://github.com/iconic/open-iconic) - open source sibling of Iconic
 
 ## TODO
 
-[x] Play-pause feature
-[ ] Set the volue of each audio track individally
-[ ] Show the progress of the each audio track loaded
+- [x] Play-pause feature.
+- [x] Set the volume of each audio track individally.
+- [ ] Show the progress of the each audio track.
+- [ ] Looping files doesn't require playing sound again 
 
-## Authors
+## Author
 
 * **Adam Walkiewicz**
 
@@ -91,7 +139,7 @@ This section will be updated soon
 
 All the audio samples used in this project are under  [Creative Commons 0 License](https://creativecommons.org/publicdomain/zero/1.0/).
 
-Files were downloaded fomr https://freesound.org/
+Files were downloaded from https://freesound.org/
 
 - 149022__foxen10__train.wav
 - 155346__mario1298__street-old-town-of-rhodes.wav

@@ -43,7 +43,6 @@ INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
     9: "<KP_3>",
 }
 
-global global_list_of_sounds
 global_list_of_sounds: List[Union[SoundMusic, None]] = [
     None for _ in range(NUMBER_OF_BUTTONS)
 ]
@@ -80,16 +79,23 @@ def open_settings(system: str = SYSTEM) -> int:
     return os.system(command)
 
 
-def bind_key(key: int, object: tkinter.Tk) -> None:
+def _bind_key_to_sound(key: int, object: tkinter.Tk) -> None:
     logging.debug(f"Bind key: {key}")
     if KEY_RANGE == "inside_app":
         hotkey = INSIDE_APP_KEY_MAPPING.get(key + 1, "0")
-        object.bind(hotkey, lambda event: global_list_of_sounds[key].play())
+        object.bind(hotkey, lambda event: _play_binded_sound(key))
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
         keyboard.GlobalHotKeys(
-            {hotkey: lambda: global_list_of_sounds[key].play()}
+            {hotkey: lambda: _play_binded_sound(key)}
         ).start()
+        
+
+def _play_binded_sound(key: int) -> None:
+    try:
+        return global_list_of_sounds[key].play()
+    except AttributeError:
+        logging.debug(f"KEY INACTIVE: {key}")
 
 
 class VolumeBar(tkinter.Scale):
@@ -110,13 +116,13 @@ class VolumeBar(tkinter.Scale):
         self.volume_bar_list.append(self)
 
     def set_sound_volume(self, value):
-        logging.debug(f"Volume set to: {value}")
+        logging.debug(f"VOLUMEBAR moved. Current value: {value}")
         sound = global_list_of_sounds[self.nr]
         if isinstance(sound, SoundMusic):
             sound.set_volume(float(value))
-            logging.debug(f"VOLUMEBAR: volume set to: {value}")
+            logging.info(f"VOLUME set to: {value}")
         else:
-            logging.debug(f"VOLUMEBAR: no sound")
+            logging.info(f"EMPTY BUTTON")
 
 
 class LoopCheckBox(tkinter.Checkbutton):
@@ -177,7 +183,7 @@ class PadButton(Button):
             sound.play()
             logging.info(f"PLAY: {sound.path}")
         else:
-            logging.debug(f"Empty PAD BUTTON pressed.")
+            logging.info(f"EMPTY BUTTON")
 
     # I'm keeping this in case one day I'd like to sort button list
     # def _button_list_sort(self):
@@ -216,7 +222,7 @@ class OpenButton(Button):
         )
         if self.file_path:
             global_list_of_sounds[self.nr] = SoundMusic(self.file_path, self.nr)
-            bind_key(self.nr, self.master.master)
+            _bind_key_to_sound(self.nr, self.master.master)
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
 
@@ -350,7 +356,7 @@ class OpenProjectButton(Button):
                                 file_path, int(file_id)
                             )
                             pad_button_text = os.path.split(file_path)[1]
-                            bind_key(
+                            _bind_key_to_sound(
                                 int(file_id),
                                 OpenButton.buttons_list[int(file_id)].master.master,
                             )

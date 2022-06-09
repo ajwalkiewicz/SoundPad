@@ -18,6 +18,8 @@ _THIS_FOLDER: str = os.path.dirname(os.path.abspath(__file__))
 
 FONT: Tuple[str, str] = ("Helvetica", "10")
 NUMBER_OF_BUTTONS: int = 9
+NUMBER_CHANNELS: int = 9
+
 
 SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
     1: "7",
@@ -59,7 +61,6 @@ SETTINGS: str = os.path.join(_THIS_FOLDER, "data", "settings.json")
 with open(SETTINGS, "r") as json_file:
     settings: dict = json.load(json_file)
     DEFAULT_DIRECTORY: str = settings["default_directory"]
-    NUM_CHANNELS: int = settings["num_channels"]
     KEY_RANGE: str = settings["key_range"]
     FONT: Tuple[str, str] = (settings["font_type"], settings["font_size"])
     SHOW_SETTINGS: bool = settings["show_settings"]
@@ -619,7 +620,7 @@ class AppWindow(tkinter.Tk):
 def run() -> None:
     """Main Program Function"""
     pygame.mixer.init()
-    pygame.mixer.set_num_channels(NUM_CHANNELS)
+    pygame.mixer.set_num_channels(NUMBER_CHANNELS)
     app = AppWindow()
     app.mainloop()
 

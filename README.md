@@ -124,7 +124,7 @@ Settings can be change in: `module/data/settings/json`
 
 - [x] Play-pause feature.
 - [x] Set the volume of each audio track individally.
-- [ ] Saves include volume and loop status
+- [x] Saves include volume and loop status
 - [ ] Show the progress of the each audio track.
 - [ ] Looping files doesn't require playing sound again 
 

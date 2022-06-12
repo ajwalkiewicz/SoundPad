@@ -2,7 +2,7 @@ from distutils import log
 import logging
 import sys
 
-__version__ = 3.1
+__version__ = 4.0
 __author__ = "Adam Walkiewicz"
 github = "https://github.com/ajwalkiewicz/SoundPad"
 

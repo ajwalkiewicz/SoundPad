@@ -88,10 +88,8 @@ def _bind_key_to_sound(key: int, object: tkinter.Tk) -> None:
         object.bind(hotkey, lambda event: _play_binded_sound(key))
     if KEY_RANGE == "system_wide":
         hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
-        keyboard.GlobalHotKeys(
-            {hotkey: lambda: _play_binded_sound(key)}
-        ).start()
-        
+        keyboard.GlobalHotKeys({hotkey: lambda: _play_binded_sound(key)}).start()
+
 
 def _play_binded_sound(key: int) -> None:
     try:
@@ -148,7 +146,7 @@ class LoopCheckBox(tkinter.Checkbutton):
         logging.debug(f"CHECKBOX checked, id: {self.nr}")
         sound = global_list_of_sounds[self.nr]
         if isinstance(sound, SoundMusic):
-            sound.is_looped = self.var.get()
+            sound.isloop = self.var.get()
             logging.info(f"CHECKBOX value: {self.var.get()}")
         else:
             logging.debug(f"CHECKBOX: Empty button")
@@ -312,18 +310,35 @@ class SaveProjectButton(Button):
                 defaultextension=".json",
             )
             if hasattr(save_file, "write"):
-                config = {
-                    key: button.file_path
-                    for key, button in enumerate(OpenButton.buttons_list)
+                sounds_path = [sound.path for sound in global_list_of_sounds]
+                sounds_volume = [
+                    volume_bar.get() for volume_bar in VolumeBar.volume_bar_list
+                ]
+                sounds_isloop = [
+                    loop_checkbox.var.get()
+                    for loop_checkbox in LoopCheckBox.loop_check_box_list
+                ]
+
+                sounds_state = {
+                    key: {
+                        "path": options[0],
+                        "volume": options[1],
+                        "isloop": options[2],
+                    }
+                    for key, options in enumerate(
+                        zip(sounds_path, sounds_volume, sounds_isloop)
+                    )
                 }
-                json.dump(config, save_file)
-                save_file.close()
+                logging.debug(sounds_state)
+                json.dump(sounds_state, save_file, indent=True)
         except PermissionError:
-            logging.debug(f"PERMISSION ERROR while trying to save project")
+            logging.debug(f"PERMISSION ERROR. Cannot save file in this directory")
             tkinter.messagebox.showerror(
                 title="Permission Error",
                 message="You do not have perrmision to save files in this loaction",
             )
+        finally:
+            save_file.close()
 
 
 class OpenProjectButton(Button):
@@ -343,33 +358,46 @@ class OpenProjectButton(Button):
             initialdir=initial_directory, title=title, filetypes=file_types
         )
 
-        if file_path:
-            for position, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
-                PadButton.buttons_list[position].config(text=str(text))
-                # global_list_of_sounds[position] = None
+        for checkbox in LoopCheckBox.loop_check_box_list:
+            checkbox.deselect()
 
-            with open(file_path, "r") as settings_file:
-                settings: dict = json.loads(settings_file.read())
+        for volumebar in VolumeBar.volume_bar_list:
+            volumebar.set(1)
+
+        if file_path:
+            for index, text in enumerate([7, 8, 9, 4, 5, 6, 1, 2, 3]):
+                PadButton.buttons_list[index].config(text=str(text))
+
+            with open(file_path, "r") as f:
+                settings: dict = json.loads(f.read())
                 files_not_found_list: list = []
-                for file_id, file_path in settings.items():
-                    if file_path:
+
+                for index, sound_details in settings.items():
+                    index: int = int(index)
+                    path: str = sound_details["path"]
+                    volume: float = sound_details["volume"]
+                    isloop: int = sound_details["isloop"]
+
+                    if path:
                         try:
-                            global_list_of_sounds[int(file_id)] = SoundMusic(
-                                file_path, int(file_id)
+                            global_list_of_sounds[index] = SoundMusic(
+                                path, index, isloop, volume
                             )
-                            pad_button_text = os.path.split(file_path)[1]
                             _bind_key_to_sound(
-                                int(file_id),
-                                OpenButton.buttons_list[int(file_id)].master.master,
+                                index,
+                                OpenButton.buttons_list[index].master.master,
                             )
-                            PadButton.buttons_list[int(file_id)].config(
-                                text=pad_button_text
-                            )
+                            pad_button_text = os.path.split(path)[1]
+                            PadButton.buttons_list[index].config(text=pad_button_text)
+                            VolumeBar.volume_bar_list[index].set_sound_volume(volume)
+                            VolumeBar.volume_bar_list[index].set(volume)
+                            if isloop < 0:
+                                LoopCheckBox.loop_check_box_list[index].toggle()
                         except FileNotFoundError:
                             files_not_found_list.append(file_path)
                             logging.exception(f"File not found: {file_path}")
                     else:
-                        global_list_of_sounds[int(file_id)] = None
+                        global_list_of_sounds[index] = None
 
             if files_not_found_list:
                 message = "The following files could not be found: \n"

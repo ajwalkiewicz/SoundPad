@@ -13,7 +13,7 @@ class SoundMusic:
     to control music.
     """
 
-    def __init__(self, file: str, sound_id: int, isloop: int = 0, volume: float = None):
+    def __init__(self, file: str, sound_id: int, isloop: int = 0, volume: float = 1.0):
         self.path: str = os.path.join(file)
         self.sound: Sound = pygame.mixer.Sound(self.path)
         self.id: int = sound_id
@@ -21,8 +21,7 @@ class SoundMusic:
         self.isloop: int = isloop
         self.length: float = self.sound.get_length()  # In seconds
         self.channel: Channel = pygame.mixer.Channel(self.id)
-        if not volume:
-            self.set_volume(volume)
+        self.set_volume(volume)
         logging.debug(f"INITIALIZE: {self}")
 
     def play(self):
@@ -56,9 +55,9 @@ class SoundMusic:
     def __repr__(self) -> str:
         return f"SoundMusic(file='{self.path}', sound_id={self.id}, isloop={self.isloop} volume={self.sound.get_volume()})"
 
-    def __del__(self):
-        """Report SoundMusic when objects are deleted while program is running."""
-        logging.debug(f"DELETE: {self} from memory")
+    # def __del__(self):
+    #     """Report SoundMusic when objects are deleted while program is running."""
+    #     logging.debug(f"DELETE: {self} from memory")
 
 
 # TODO: get length

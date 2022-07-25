@@ -310,7 +310,8 @@ class SaveProjectButton(Button):
                 defaultextension=".json",
             )
             if hasattr(save_file, "write"):
-                sounds_path = [sound.path for sound in global_list_of_sounds]
+                # sounds_path = [sound.path for sound in global_list_of_sounds]
+                sounds_path = list(map(lambda x: x.path if isinstance(x, SoundMusic) else "", global_list_of_sounds))
                 sounds_volume = [
                     volume_bar.get() for volume_bar in VolumeBar.volume_bar_list
                 ]

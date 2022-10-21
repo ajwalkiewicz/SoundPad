@@ -1,7 +1,7 @@
 import logging
 import sys
 
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 __author__ = "Adam Walkiewicz"
 github = "https://github.com/ajwalkiewicz/SoundPad"
 

@@ -216,7 +216,11 @@ class OpenButton(Button):
         logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
         initial_directory = os.path.join(DEFAULT_DIRECTORY)
         title = "Select A File"
-        file_types = [("wav files", "*.wav")]
+        file_types = [
+            ("wav files", "*.wav"),
+            ("mp3 files", "*.mp3"),
+            ("all files", "*.*"),
+        ]
         self.file_path = tkinter.filedialog.askopenfilename(
             initialdir=initial_directory, title=title, filetypes=file_types
         )
@@ -311,7 +315,12 @@ class SaveProjectButton(Button):
             )
             if hasattr(save_file, "write"):
                 # sounds_path = [sound.path for sound in global_list_of_sounds]
-                sounds_path = list(map(lambda x: x.path if isinstance(x, SoundMusic) else "", global_list_of_sounds))
+                sounds_path = list(
+                    map(
+                        lambda x: x.path if isinstance(x, SoundMusic) else "",
+                        global_list_of_sounds,
+                    )
+                )
                 sounds_volume = [
                     volume_bar.get() for volume_bar in VolumeBar.volume_bar_list
                 ]
@@ -395,8 +404,8 @@ class OpenProjectButton(Button):
                             if isloop < 0:
                                 LoopCheckBox.loop_check_box_list[index].toggle()
                         except FileNotFoundError:
-                            files_not_found_list.append(file_path)
-                            logging.exception(f"File not found: {file_path}")
+                            files_not_found_list.append(path)
+                            logging.exception(f"File not found: {path}")
                     else:
                         global_list_of_sounds[index] = None
 

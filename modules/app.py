@@ -65,6 +65,7 @@ with open(SETTINGS, "r") as json_file:
     FONT: Tuple[str, str] = (settings["font_type"], settings["font_size"])
     SHOW_SETTINGS: bool = settings["show_settings"]
     FADEOUT_LENGTH: int = settings["fadeout_length"]
+    IS_ON_TOP: bool = settings["on_top"]
 
 SYSTEM: str = sys.platform
 if SYSTEM == "win32":
@@ -345,7 +346,7 @@ class SaveProjectButton(Button):
             logging.debug(f"PERMISSION ERROR. Cannot save file in this directory")
             tkinter.messagebox.showerror(
                 title="Permission Error",
-                message="You do not have perrmision to save files in this loaction",
+                message="You do not have permission to save files in this location",
             )
         finally:
             save_file.close()
@@ -491,10 +492,14 @@ class File(MenuBar):
         self.file_list.append(self)
 
     def file_menu(self) -> None:
-        self.add_command(label="Open Project", command=OpenProjectButton.open_project)
-        self.add_command(label="Save Project", command=SaveProjectButton.save_project)
-        # self.add_command(label="Settigns", command=SettingsWindow)
-        self.add_command(label="Settigns", command=open_settings)
+        self.add_command(
+            label="Open Project (Ctrl+o)", command=OpenProjectButton.open_project
+        )
+        self.add_command(
+            label="Save Project (Ctrl+s)", command=SaveProjectButton.save_project
+        )
+        # self.add_command(label="Settings", command=SettingsWindow)
+        self.add_command(label="Settings (Ctrl+/)", command=open_settings)
         self.add_separator()
 
 
@@ -650,6 +655,7 @@ class AppWindow(tkinter.Tk):
         # General keybindings
         self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
         self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())
+        self.bind("<Control-Key-slash>", lambda event: open_settings())
         # To change
         File.file_list[0].add_command(label="Exit", command=self.destroy)
         self.config(menu=self.filemenu)
@@ -660,6 +666,8 @@ def run() -> None:
     pygame.mixer.init()
     pygame.mixer.set_num_channels(NUMBER_CHANNELS)
     app = AppWindow()
+    # app.lift()
+    app.attributes("-topmost", IS_ON_TOP)
     app.mainloop()
 
 

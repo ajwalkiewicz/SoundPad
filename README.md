@@ -137,11 +137,12 @@ Settings can be change in: `module/data/settings/json`
 
 ## To Do
 
-- [x] Play-pause feature.
-- [x] Set the volume of each audio track individually.
+- [x] Play-pause feature
+- [x] Set the volume of each audio track individually
 - [x] Saves include volume and loop status
-- [ ] Show the progress of the each audio track.
-- [ ] Looping files doesn't require playing sound again
+- [ ] [Show the progress of the each audio](https://github.com/ajwalkiewicz/SoundPad/issues/4)
+- [ ] [Looping files doesn't require playing sound again](https://github.com/ajwalkiewicz/SoundPad/issues/5)
+- [ ] [Open project directory in the last place where project was saved](https://github.com/ajwalkiewicz/SoundPad/issues/6)
 
 ## Author
 

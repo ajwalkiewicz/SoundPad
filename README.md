@@ -155,12 +155,12 @@ All the audio samples used in this project are under [Creative Commons 0 License
 
 Files were downloaded from https://freesound.org/
 
-- 149022**foxen10**train.wav
-- 155346**mario1298**street-old-town-of-rhodes.wav
-- 267128**contramundum**stepping-down-into-the-dungeon.mp3
-- 424792**bolkmar**town-bells.wav
-- 580442**bennynz**dungeon-lock-2.wav
-- 581491**carthny**thunder-rush-28-july-2021.wav
+- 149022\_\_foxen10\_\_train.wav
+- 155346\_\_mario1298\_\_street-old-town-of-rhodes.wav
+- 267128\_\_contramundum\_\_stepping-down-into-the-dungeon.mp3
+- 424792\_\_bolkmar\_\_town-bells.wav
+- 580442\_\_bennynz\_\_dungeon-lock-2.wav
+- 581491\_\_carthny\_\_thunder-rush-28-july-2021.wav
 
 ### SoundPad
 

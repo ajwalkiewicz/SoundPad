@@ -5,5 +5,6 @@
     "font_size": 10,
     "show_settings": false,
     "fadeout_length": 3000,
-    "on_top": true
+    "on_top": true,
+    "key_0_behavior": "pause"
 }

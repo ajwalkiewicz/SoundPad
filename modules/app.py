@@ -23,6 +23,7 @@ NUMBER_CHANNELS: int = 9
 
 SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
     0: "0",
+    0: "0",
     1: "7",
     2: "8",
     3: "9",
@@ -35,6 +36,7 @@ SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
 }
 
 INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
+    0: "<KP_0>",
     0: "<KP_0>",
     1: "<KP_7>",
     2: "<KP_8>",
@@ -449,6 +451,8 @@ class StopAll(Button):
 class PauseUnpauseAll(Button):
     state = True
 
+    state = True
+
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
@@ -631,6 +635,8 @@ class ButtonFrame(tkinter.Frame):
         self.stop_all_btn = StopAll(self, self.pause_unpause_all_btn)
         self.stop_all_btn.grid(row=7, column=1, columnspan=5, sticky=tkinter.NSEW)
 
+        self.fadeout_all_btn = FadeoutAll(self)
+        self.fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
         self.fadeout_all_btn = FadeoutAll(self)
         self.fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
 

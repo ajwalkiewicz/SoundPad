@@ -23,7 +23,6 @@ NUMBER_CHANNELS: int = 9
 
 SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
     0: "0",
-    0: "0",
     1: "7",
     2: "8",
     3: "9",
@@ -36,7 +35,6 @@ SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
 }
 
 INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
-    0: "<KP_0>",
     0: "<KP_0>",
     1: "<KP_7>",
     2: "<KP_8>",

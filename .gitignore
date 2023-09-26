@@ -161,5 +161,10 @@ cython_debug/
 # Exclude gitignore
 # .gitignore
 
+# VSCode
+.vscode
+
 # Exlcude test files
 test*.json
+
+

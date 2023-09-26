@@ -101,7 +101,7 @@ python3 soundpad.py
 
 Settings can be change in: `module/data/settings/json`
 
-```JSON
+```javascript
 {
     "default_directory": "samples",
     "key_range": "system_wide",    // or "inside_app"
@@ -109,7 +109,8 @@ Settings can be change in: `module/data/settings/json`
     "font_size": 10,
     "show_settings": false,        // DEPRECATED
     "fadeout_length": 2000,        // fadeout in milliseconds
-    "on_top": false                // Always on top when true
+    "on_top": false,               // Always on top when true
+    "key_0_behavior": "pause"      // or "stop"
 }
 ```
 

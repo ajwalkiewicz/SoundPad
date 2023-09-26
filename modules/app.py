@@ -22,6 +22,7 @@ NUMBER_CHANNELS: int = 9
 
 
 SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
+    0: "0",
     1: "7",
     2: "8",
     3: "9",
@@ -34,6 +35,7 @@ SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
 }
 
 INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
+    0: "<KP_0>",
     1: "<KP_7>",
     2: "<KP_8>",
     3: "<KP_9>",
@@ -66,6 +68,12 @@ with open(SETTINGS, "r") as json_file:
     SHOW_SETTINGS: bool = settings["show_settings"]
     FADEOUT_LENGTH: int = settings["fadeout_length"]
     IS_ON_TOP: bool = settings["on_top"]
+    KEY_0_BEHAVIOR: str = settings["key_0_behavior"]
+
+KEY_MAPPING = (
+    SYSTEM_WIDE_KEY_MAPPING if KEY_RANGE == "system_wide" else INSIDE_APP_KEY_MAPPING
+)
+
 
 SYSTEM: str = sys.platform
 if SYSTEM == "win32":
@@ -82,13 +90,12 @@ def open_settings(system: str = SYSTEM) -> int:
     return os.system(command)
 
 
-def _bind_key_to_sound(key: int, object: tkinter.Tk) -> None:
+def _bind_key_to_sound(key: int, object_: tkinter.Tk) -> None:
     logging.debug(f"Bind key: {key}")
+    hotkey = KEY_MAPPING.get(key + 1)
     if KEY_RANGE == "inside_app":
-        hotkey = INSIDE_APP_KEY_MAPPING.get(key + 1, "0")
-        object.bind(hotkey, lambda event: _play_binded_sound(key))
+        object_.bind(hotkey, lambda event: _play_binded_sound(key))
     if KEY_RANGE == "system_wide":
-        hotkey = SYSTEM_WIDE_KEY_MAPPING.get(key + 1, "0")
         keyboard.GlobalHotKeys({hotkey: lambda: _play_binded_sound(key)}).start()
 
 
@@ -418,20 +425,32 @@ class OpenProjectButton(Button):
 
 
 class StopAll(Button):
-    def __init__(self, frame=None):
+    def __init__(self, frame=None, pause_unpause_all: "PauseUnpauseAll" = None):
         super().__init__(frame)
         self.frame = frame
         self["width"] = 20
         self["height"] = 2
         self["text"] = "STOP ALL"
-        self["command"] = self.stop_all
+        if pause_unpause_all:
+            self["command"] = lambda: self.stop_all(pause_unpause_all)
+        else:
+            self["command"] = self.stop_all
 
-    def stop_all(self) -> None:
-        logging.info(f"STOP ALL BUTTON pressed")
+    @staticmethod
+    def stop_all(button: "PauseUnpauseAll" = None) -> None:
+        logging.info("STOP ALL BUTTON pressed")
         pygame.mixer.stop()
+
+        if button:
+            button["text"] = "PAUSE ALL"
+            button.state = True
 
 
 class PauseUnpauseAll(Button):
+    state = True
+
+    state = True
+
     def __init__(self, frame=None):
         super().__init__(frame)
         self.frame = frame
@@ -439,17 +458,37 @@ class PauseUnpauseAll(Button):
         self["height"] = 2
         self["text"] = "PAUSE ALL"
         self["command"] = self.pause_unpause_all
-        self.state = True
 
     def pause_unpause_all(self) -> None:
-        if self.state:
-            logging.info(f"PAUSE ALL")
+        self._pause_unpause_all(self)
+
+    @staticmethod
+    def _pause_unpause_all(button: "PauseUnpauseAll") -> bool:
+        logging.info("PAUSE ALL BUTTON pressed")
+
+        if not pygame.mixer.get_busy():
+            logging.debug("Nothing is playing")
+            return PauseUnpauseAll.state
+
+        if PauseUnpauseAll.state:
+            logging.debug("PAUSE ALL")
             pygame.mixer.pause()
-            self.state = False
         else:
-            logging.info(f"UNPAUSE ALL")
+            logging.debug("UNPAUSE ALL")
             pygame.mixer.unpause()
-            self.state = True
+
+        PauseUnpauseAll._change_text(button)
+        PauseUnpauseAll._change_state()
+
+        return PauseUnpauseAll.state
+
+    @staticmethod
+    def _change_state():
+        PauseUnpauseAll.state = not PauseUnpauseAll.state
+
+    @staticmethod
+    def _change_text(button: "PauseUnpauseAll"):
+        button["text"] = "UNPAUSE ALL" if PauseUnpauseAll.state else "PAUSE ALL"
 
 
 class FadeoutAll(Button):
@@ -586,14 +625,18 @@ class ButtonFrame(tkinter.Frame):
                 loop_check_box = LoopCheckBox(self)
                 loop_check_box.grid(row=row + 1, column=col + 4, sticky=tkinter.NSEW)
 
-        stop_all_btn = StopAll(self)
-        stop_all_btn.grid(row=7, column=1, columnspan=5, sticky=tkinter.NSEW)
+        self.pause_unpause_all_btn = PauseUnpauseAll(self)
+        self.pause_unpause_all_btn.grid(
+            row=7, column=6, columnspan=5, sticky=tkinter.NSEW
+        )
 
-        pause_unpause_all_btn = PauseUnpauseAll(self)
-        pause_unpause_all_btn.grid(row=7, column=6, columnspan=5, sticky=tkinter.NSEW)
+        self.stop_all_btn = StopAll(self, self.pause_unpause_all_btn)
+        self.stop_all_btn.grid(row=7, column=1, columnspan=5, sticky=tkinter.NSEW)
 
-        fadeout_all_btn = FadeoutAll(self)
-        fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
+        self.fadeout_all_btn = FadeoutAll(self)
+        self.fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
+        self.fadeout_all_btn = FadeoutAll(self)
+        self.fadeout_all_btn.grid(row=7, column=11, columnspan=5, sticky=tkinter.NSEW)
 
 
 class SettingsFrame(tkinter.Frame):
@@ -650,15 +693,67 @@ class AppWindow(tkinter.Tk):
         self.button_frame.grid(row=0, column=0, sticky=tkinter.NSEW)
         self.settings_frame = SettingsFrame(self)
         self.filemenu = MenuBar()
+
         if SHOW_SETTINGS:
             self.settings_frame.show_frame()
+
+        self.key_mapping = KEY_MAPPING
+
         # General keybindings
         self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
         self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())
         self.bind("<Control-Key-slash>", lambda event: open_settings())
+
+        # Bind "0" key
+        self.bind_key_0(KEY_RANGE, KEY_0_BEHAVIOR)
+
         # To change
         File.file_list[0].add_command(label="Exit", command=self.destroy)
         self.config(menu=self.filemenu)
+
+    def bind_key_0(self, key_range, kp_0_behavior):
+        hotkey = self.key_mapping.get(0)
+
+        action = {
+            "inside_app": {
+                "pause": self._inside_app_pause,
+                "stop": self._inside_app_stop,
+            },
+            "system_wide": {
+                "pause": self._system_wide_pause,
+                "stop": self._system_wide_stop,
+            },
+        }
+
+        action[key_range][kp_0_behavior](hotkey)
+
+    def _system_wide_pause(self, hotkey):
+        keyboard.GlobalHotKeys(
+            {
+                hotkey: lambda: PauseUnpauseAll._pause_unpause_all(
+                    self.button_frame.pause_unpause_all_btn
+                )
+            }
+        ).start()
+
+    def _inside_app_pause(self, hotkey):
+        self.bind(
+            hotkey,
+            lambda event: PauseUnpauseAll._pause_unpause_all(
+                self.button_frame.pause_unpause_all_btn
+            ),
+        )
+
+    def _system_wide_stop(self, hotkey):
+        keyboard.GlobalHotKeys(
+            {hotkey: lambda: StopAll.stop_all(self.button_frame.pause_unpause_all_btn)}
+        ).start()
+
+    def _inside_app_stop(self, hotkey):
+        self.bind(
+            hotkey,
+            lambda event: StopAll.stop_all(self.button_frame.pause_unpause_all_btn),
+        )
 
 
 def run() -> None:

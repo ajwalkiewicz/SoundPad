@@ -1,18 +1,20 @@
+import json
+import logging
+import os
+import sys
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
-import pygame
-import os
-import sys
-import logging
-import json
-from typing import List, Tuple, Dict, Union
-
 import webbrowser
+from typing import Dict, Tuple
+
+import pygame
 from pynput import keyboard
 
 import modules.utils as utils
-from modules.audio import SoundMusic
+from modules.audio import NoSound, Sound
+from modules.player import Player
+from modules.playlist import Playlist
 
 _THIS_FOLDER: str = os.path.dirname(os.path.abspath(__file__))
 
@@ -47,9 +49,8 @@ INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
     9: "<KP_3>",
 }
 
-global_list_of_sounds: List[Union[SoundMusic, None]] = [
-    None for _ in range(NUMBER_OF_BUTTONS)
-]
+playlist = Playlist(max_sounds=NUMBER_OF_BUTTONS)
+global_player = Player(playlist=playlist)
 
 github: str = "https://github.com/ajwalkiewicz/SoundPad"
 
@@ -101,7 +102,7 @@ def _bind_key_to_sound(key: int, object_: tkinter.Tk) -> None:
 
 def _play_binded_sound(key: int) -> None:
     try:
-        return global_list_of_sounds[key].play()
+        return global_player.play(key)
     except AttributeError:
         logging.debug(f"KEY INACTIVE: {key}")
 
@@ -125,12 +126,7 @@ class VolumeBar(tkinter.Scale):
 
     def set_sound_volume(self, value):
         logging.debug(f"VOLUMEBAR moved. Current value: {value}")
-        sound = global_list_of_sounds[self.nr]
-        if isinstance(sound, SoundMusic):
-            sound.set_volume(float(value))
-            logging.info(f"VOLUME set to: {value}")
-        else:
-            logging.info(f"EMPTY BUTTON")
+        global_player.set_volume(self.nr, float(value))
 
 
 class LoopCheckBox(tkinter.Checkbutton):
@@ -152,12 +148,7 @@ class LoopCheckBox(tkinter.Checkbutton):
 
     def check(self):
         logging.debug(f"CHECKBOX checked, id: {self.nr}")
-        sound = global_list_of_sounds[self.nr]
-        if isinstance(sound, SoundMusic):
-            sound.isloop = self.var.get()
-            logging.info(f"CHECKBOX value: {self.var.get()}")
-        else:
-            logging.debug(f"CHECKBOX: Empty button")
+        global_player.playlist[self.nr].isloop = self.var.get()
 
 
 class Button(tkinter.Button):
@@ -186,12 +177,7 @@ class PadButton(Button):
 
     def play(self):
         logging.debug(f"PAD BUTTON pressed, id: {self.nr}")
-        sound = global_list_of_sounds[self.nr]
-        if isinstance(sound, SoundMusic):
-            sound.play()
-            logging.info(f"PLAY: {sound.path}")
-        else:
-            logging.info(f"EMPTY BUTTON")
+        global_player.play(self.nr)
 
     # I'm keeping this in case one day I'd like to sort button list
     # def _button_list_sort(self):
@@ -233,7 +219,7 @@ class OpenButton(Button):
             initialdir=initial_directory, title=title, filetypes=file_types
         )
         if self.file_path:
-            global_list_of_sounds[self.nr] = SoundMusic(self.file_path, self.nr)
+            global_player.playlist[self.nr] = Sound(self.file_path, self.nr)
             _bind_key_to_sound(self.nr, self.master.master)
             pad_button_text = os.path.split(self.file_path)[1]
             PadButton.buttons_list[self.nr].config(text=pad_button_text)
@@ -256,8 +242,7 @@ class StopButton(Button):
 
     def stop_file(self):
         logging.info(f"STOP BUTTON pressed, id: {self.nr}")
-        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
-            global_list_of_sounds[self.nr].stop()
+        global_player.stop(self.nr)
 
 
 class PauseButton(Button):
@@ -276,8 +261,7 @@ class PauseButton(Button):
 
     def pause(self) -> None:
         logging.info(f"PAUSE BUTTON pressed, id: {self.nr}")
-        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
-            global_list_of_sounds[self.nr].play_pause()
+        global_player.play_pause(self.nr)
 
 
 class PlayButton(Button):
@@ -296,8 +280,7 @@ class PlayButton(Button):
 
     def play(self) -> None:
         logging.info(f"PLAY BUTTON pressed, id: {self.nr}")
-        if isinstance(global_list_of_sounds[self.nr], SoundMusic):
-            global_list_of_sounds[self.nr].play()
+        global_player.play(self.nr)
 
 
 class SaveProjectButton(Button):
@@ -323,12 +306,7 @@ class SaveProjectButton(Button):
             )
             if hasattr(save_file, "write"):
                 # sounds_path = [sound.path for sound in global_list_of_sounds]
-                sounds_path = list(
-                    map(
-                        lambda x: x.path if isinstance(x, SoundMusic) else "",
-                        global_list_of_sounds,
-                    )
-                )
+                sounds_path = global_player.playlist.get_paths()
                 sounds_volume = [
                     volume_bar.get() for volume_bar in VolumeBar.volume_bar_list
                 ]
@@ -398,7 +376,7 @@ class OpenProjectButton(Button):
 
                     if path:
                         try:
-                            global_list_of_sounds[index] = SoundMusic(
+                            global_player.playlist[index] = Sound(
                                 path, index, isloop, volume
                             )
                             _bind_key_to_sound(
@@ -415,7 +393,7 @@ class OpenProjectButton(Button):
                             files_not_found_list.append(path)
                             logging.exception(f"File not found: {path}")
                     else:
-                        global_list_of_sounds[index] = None
+                        global_player.playlist[index] = NoSound()
 
             if files_not_found_list:
                 message = "The following files could not be found: \n"

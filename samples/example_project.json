@@ -1,0 +1,47 @@
+{
+ "0": {
+  "path": "/home/walu/Git/SoundPad/samples/149022__foxen10__train.wav",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "1": {
+  "path": "/home/walu/Git/SoundPad/samples/155346__mario1298__street-old-town-of-rhodes.wav",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "2": {
+  "path": "/home/walu/Git/SoundPad/samples/424792__bolkmar__town-bells.wav",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "3": {
+  "path": "/home/walu/Git/SoundPad/samples/580442__bennynz__dungeon-lock-2.wav",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "4": {
+  "path": "/home/walu/Git/SoundPad/samples/581491__carthny__thunder-rush-28-july-2021.wav",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "5": {
+  "path": "/home/walu/Git/SoundPad/samples/267128__contramundum__stepping-down-into-the-dungeon.mp3",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "6": {
+  "path": "",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "7": {
+  "path": "",
+  "volume": 1.0,
+  "isloop": 0
+ },
+ "8": {
+  "path": "",
+  "volume": 1.0,
+  "isloop": 0
+ }
+}

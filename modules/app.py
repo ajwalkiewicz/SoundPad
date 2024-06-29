@@ -1,102 +1,31 @@
 import json
 import logging
 import os
-import sys
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
 import webbrowser
-from typing import Dict, Tuple
+from typing import Optional
 
 import pygame
 from pynput import keyboard
 
-import modules.utils as utils
+from modules import settings
 from modules.audio import NoSound, Sound
 from modules.player import Player
 from modules.playlist import Playlist
+from modules.settings import Image, PublicConfig, Text
 
-_THIS_FOLDER: str = os.path.dirname(os.path.abspath(__file__))
-
-FONT: Tuple[str, str] = ("Helvetica", "10")
-NUMBER_OF_BUTTONS: int = 9
-NUMBER_CHANNELS: int = 9
-
-
-SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {
-    0: "0",
-    1: "7",
-    2: "8",
-    3: "9",
-    4: "4",
-    5: "5",
-    6: "6",
-    7: "1",
-    8: "2",
-    9: "3",
-}
-
-INSIDE_APP_KEY_MAPPING: Dict[int, str] = {
-    0: "<KP_0>",
-    1: "<KP_7>",
-    2: "<KP_8>",
-    3: "<KP_9>",
-    4: "<KP_4>",
-    5: "<KP_5>",
-    6: "<KP_6>",
-    7: "<KP_1>",
-    8: "<KP_2>",
-    9: "<KP_3>",
-}
-
-playlist = Playlist(max_sounds=NUMBER_OF_BUTTONS)
+playlist = Playlist(max_sounds=settings.NUMBER_OF_BUTTONS)
 global_player = Player(playlist=playlist)
-
-github: str = "https://github.com/ajwalkiewicz/SoundPad"
-
-open_img_path: str = "images/folder-2x.png"
-stop_img_path: str = "images/media-stop-2x.png"
-pause_img_path: str = "images/media-pause-2x.png"
-play_img_path: str = "images/media-play-2x.png"
-
-SETTINGS: str = os.path.join(_THIS_FOLDER, "data", "settings.json")
-
-with open(SETTINGS, "r") as json_file:
-    settings: dict = json.load(json_file)
-    DEFAULT_DIRECTORY: str = settings["default_directory"]
-    KEY_RANGE: str = settings["key_range"]
-    FONT: Tuple[str, str] = (settings["font_type"], settings["font_size"])
-    SHOW_SETTINGS: bool = settings["show_settings"]
-    FADEOUT_LENGTH: int = settings["fadeout_length"]
-    IS_ON_TOP: bool = settings["on_top"]
-    KEY_0_BEHAVIOR: str = settings["key_0_behavior"]
-
-KEY_MAPPING = (
-    SYSTEM_WIDE_KEY_MAPPING if KEY_RANGE == "system_wide" else INSIDE_APP_KEY_MAPPING
-)
-
-
-SYSTEM: str = sys.platform
-if SYSTEM == "win32":
-    logging.info(f"Detected system: {SYSTEM}. Use Windows configuration")
-else:
-    logging.info(f"Detected system: {SYSTEM}. Use UNIX configuration")
-
-
-def open_settings(system: str = SYSTEM) -> int:
-    if system == "win32":
-        command = SETTINGS
-    else:
-        command = f"xdg-open {SETTINGS}"
-    return os.system(command)
 
 
 def _bind_key_to_sound(key: int, object_: tkinter.Tk) -> None:
     logging.debug(f"Bind key: {key}")
-    hotkey = KEY_MAPPING.get(key + 1)
-    if KEY_RANGE == "inside_app":
+    hotkey = settings.KEY_MAPPING.get(key + 1)
+    if PublicConfig.KEY_RANGE == "inside_app":
         object_.bind(hotkey, lambda event: _play_binded_sound(key))
-    if KEY_RANGE == "system_wide":
+    if PublicConfig.KEY_RANGE == "system_wide":
         keyboard.GlobalHotKeys({hotkey: lambda: _play_binded_sound(key)}).start()
 
 
@@ -156,7 +85,7 @@ class Button(tkinter.Button):
         super().__init__(master)
         self["width"] = 25
         self["height"] = 25
-        self["font"] = FONT
+        self["font"] = PublicConfig.FONT
 
 
 class PadButton(Button):
@@ -200,7 +129,7 @@ class OpenButton(Button):
         self["text"] = "Open"
         self["width"] = 25
         self["command"] = self.open_file
-        icon = tkinter.PhotoImage(file=open_img_path)
+        icon = tkinter.PhotoImage(file=Image.open)
         self["image"] = icon
         self.image = icon
         self.file_path = None
@@ -208,7 +137,7 @@ class OpenButton(Button):
 
     def open_file(self):
         logging.info(f"OPEN FILE BUTTON pressed, id {self.nr}")
-        initial_directory = os.path.join(DEFAULT_DIRECTORY)
+        initial_directory = os.path.join(PublicConfig.DEFAULT_DIRECTORY)
         title = "Select A File"
         file_types = [
             ("wav files", "*.wav"),
@@ -235,7 +164,7 @@ class StopButton(Button):
         self["text"] = "Stop"
         # self["width"] = 10
         self["command"] = self.stop_file
-        icon = tkinter.PhotoImage(file=stop_img_path)
+        icon = tkinter.PhotoImage(file=Image.stop)
         self["image"] = icon
         self.image = icon
         self.buttons_list.append(self)
@@ -254,7 +183,7 @@ class PauseButton(Button):
         self.nr = len(self.buttons_list)
         self["text"] = "Pause"
         self["command"] = self.pause
-        icon = tkinter.PhotoImage(file=pause_img_path)
+        icon = tkinter.PhotoImage(file=Image.pause)
         self["image"] = icon
         self.image = icon
         self.buttons_list.append(self)
@@ -273,7 +202,7 @@ class PlayButton(Button):
         self.nr = len(self.buttons_list)
         self["text"] = "Play"
         self["command"] = self.play
-        icon = tkinter.PhotoImage(file=play_img_path)
+        icon = tkinter.PhotoImage(file=Image.play)
         self["image"] = icon
         self.image = icon
         self.buttons_list.append(self)
@@ -417,7 +346,7 @@ class StopAll(Button):
     @staticmethod
     def stop_all(button: "PauseUnpauseAll" = None) -> None:
         logging.info("STOP ALL BUTTON pressed")
-        pygame.mixer.stop()
+        global_player.stop_all()
 
         if button:
             button["text"] = "PAUSE ALL"
@@ -470,10 +399,10 @@ class PauseUnpauseAll(Button):
 
 
 class FadeoutAll(Button):
-    def __init__(self, frame=None, value=FADEOUT_LENGTH):
+    def __init__(self, frame=None, value: Optional[int] = None):
         super().__init__(frame)
         self.frame = frame
-        self.value = value  # milisecond
+        self.value = value or PublicConfig.FADEOUT_LENGTH
         self["width"] = 20
         self["height"] = 2
         self["text"] = "FADEOUT ALL"
@@ -516,7 +445,7 @@ class File(MenuBar):
             label="Save Project (Ctrl+s)", command=SaveProjectButton.save_project
         )
         # self.add_command(label="Settings", command=SettingsWindow)
-        self.add_command(label="Settings (Ctrl+/)", command=open_settings)
+        self.add_command(label="Settings (Ctrl+/)", command=settings.open_settings)
         self.add_separator()
 
 
@@ -527,7 +456,7 @@ class View(MenuBar):
 
     def __init__(self):
         tkinter.Menu.__init__(self, tearoff=0)
-        self.settings_state = SHOW_SETTINGS
+        self.settings_state = PublicConfig.SHOW_SETTINGS
         self.view_menu()
 
     def view_menu(self):
@@ -563,7 +492,7 @@ class Help(MenuBar):
     def help_menu(self):
         self.add_command(label="Help", command=HelpWindow)
         self.add_command(
-            label="More info", command=lambda: webbrowser.open_new_tab(github)
+            label="More info", command=lambda: webbrowser.open_new_tab(Text.github)
         )
 
 
@@ -646,7 +575,7 @@ class HelpWindow(tkinter.Tk):
         self.title("Help")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(
-            self, text=utils.help_message, justify=tkinter.LEFT
+            self, text=Text.help_message, justify=tkinter.LEFT
         )
         self.help_label.pack()
 
@@ -672,18 +601,18 @@ class AppWindow(tkinter.Tk):
         self.settings_frame = SettingsFrame(self)
         self.filemenu = MenuBar()
 
-        if SHOW_SETTINGS:
+        if PublicConfig.SHOW_SETTINGS:
             self.settings_frame.show_frame()
 
-        self.key_mapping = KEY_MAPPING
+        self.key_mapping = settings.KEY_MAPPING
 
         # General keybindings
         self.bind("<Control-Key-o>", lambda event: OpenProjectButton.open_project())
         self.bind("<Control-Key-s>", lambda event: SaveProjectButton.save_project())
-        self.bind("<Control-Key-slash>", lambda event: open_settings())
+        self.bind("<Control-Key-slash>", lambda event: settings.open_settings())
 
         # Bind "0" key
-        self.bind_key_0(KEY_RANGE, KEY_0_BEHAVIOR)
+        self.bind_key_0(PublicConfig.KEY_RANGE, PublicConfig.KEY_0_BEHAVIOR)
 
         # To change
         File.file_list[0].add_command(label="Exit", command=self.destroy)
@@ -737,10 +666,10 @@ class AppWindow(tkinter.Tk):
 def run() -> None:
     """Main Program Function"""
     pygame.mixer.init()
-    pygame.mixer.set_num_channels(NUMBER_CHANNELS)
+    pygame.mixer.set_num_channels(settings.NUMBER_OF_CHANNELS)
     app = AppWindow()
     # app.lift()
-    app.attributes("-topmost", IS_ON_TOP)
+    app.attributes("-topmost", PublicConfig.IS_ON_TOP)
     app.mainloop()
 
 

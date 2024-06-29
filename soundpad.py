@@ -3,7 +3,6 @@ import sys
 
 __version__ = "1.0.2"
 __author__ = "Adam Walkiewicz"
-github = "https://github.com/ajwalkiewicz/SoundPad"
 
 DEFAULT_LOGGING_LEVEL = logging.ERROR
 

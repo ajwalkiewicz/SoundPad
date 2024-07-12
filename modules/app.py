@@ -294,7 +294,21 @@ class OpenProjectButton(Button):
                 PadButton.buttons_list[index].config(text=str(text))
 
             with open(file_path, "r") as f:
-                settings: dict = json.loads(f.read())
+                try:
+                    settings: dict = json.loads(f.read())
+                except json.JSONDecodeError:
+                    message = (
+                        f"SoundPad is not able to read file: {file_path}\n"
+                        "Possible reasons:\n"
+                        "  - file is not a json file\n"
+                        "  - file is incorrectly formated\n"
+                        "  - file is empty\n"
+                    )
+                    tkinter.messagebox.showerror(
+                        title="Invalid project file format", message=message
+                    )
+                    return
+
                 files_not_found_list: list = []
 
                 for index, sound_details in settings.items():
@@ -323,6 +337,8 @@ class OpenProjectButton(Button):
                             logging.exception(f"File not found: {path}")
                     else:
                         global_player.playlist[index] = NoSound()
+
+            global_player.stop_all()
 
             if files_not_found_list:
                 message = "The following files could not be found: \n"

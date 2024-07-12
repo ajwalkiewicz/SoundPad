@@ -6,6 +6,8 @@ import pygame
 
 
 class BaseSound(ABC):
+    path = ""
+
     @property
     def isloop(self) -> int:
         return self.__isloop
@@ -108,11 +110,11 @@ class Sound(BaseSound):
         logging.debug(f"VOLUME: {self} set to: {new_volume}")
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(file='{self.path}', sound_id={self.id}, isloop={self.isloop} volume={self.sound.get_volume()})"
-
-    # def __del__(self):
-    #     """Report SoundMusic when objects are deleted while program is running."""
-    #     logging.debug(f"DELETE: {self} from memory")
-
-
-# TODO: get length
+        return (
+            f"{type(self).__name__}("
+            f"file='{self.path}', "
+            f"sound_id={self.id}, "
+            f"isloop={self.isloop}, "
+            f"volume={self.sound.get_volume()}"
+            ")"
+        )

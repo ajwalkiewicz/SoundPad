@@ -23,15 +23,20 @@ class PublicConfig:
 
     @classmethod
     def load_from_json(cls, path: Path):
-        with open(path, "r") as fd:
-            settings: dict[str, Any] = json.load(fd)
+        try:
+            with open(path, "r") as fd:
+                settings: dict[str, Any] = json.load(fd)
+            for option, value in settings.items():
+                option = option.upper()
+                logging.debug(f"{option}={value}")
+                setattr(cls, option, value)
 
-        for option, value in settings.items():
-            option = option.upper()
+            cls.FONT = (cls.FONT_TYPE, cls.FONT_SIZE)
 
-            setattr(cls, option, value)
+        except json.JSONDecodeError:
+            logging.critical("Could not load settings, falling back to defaults")
 
-        cls.FONT = (cls.FONT_TYPE, cls.FONT_SIZE)
+        logging.info("Settings loaded")
 
 
 class Image:
@@ -58,7 +63,7 @@ def open_settings() -> int:
     return os.system(command)
 
 
-NUMBER_OF_BUTTONS = NUMBER_OF_CHANNELS = 9
+NUMBER_OF_BUTTONS = NUMBER_OF_CHANNELS = NUMBER_OF_SOUNDS = 9
 
 # fmt: off
 SYSTEM_WIDE_KEY_MAPPING: Dict[int, str] = {

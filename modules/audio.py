@@ -78,6 +78,7 @@ class Sound(BaseSound):
         self.isloop: int = isloop
         self.length: float = self.sound.get_length()  # In seconds
         self.channel = pygame.mixer.Channel(self.id)
+        self.volume = volume
         self.set_volume(volume)
         logging.debug(f"INITIALIZE: {self}")
 
@@ -105,6 +106,7 @@ class Sound(BaseSound):
         logging.debug(f"FADEOUT: {self}, value: {miliseconds}")
 
     def set_volume(self, new_volume: float) -> None:
+        self.volume = new_volume
         self.sound.set_volume(new_volume)
         self.channel.set_volume(1)  # volume equals: new_volume * 1
         logging.debug(f"VOLUME: {self} set to: {new_volume}")

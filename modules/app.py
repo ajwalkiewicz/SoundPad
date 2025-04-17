@@ -4,8 +4,10 @@ import os
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
+import tkinter.simpledialog
 import webbrowser
-from typing import Optional
+from tkinter import colorchooser
+from typing import List, Optional, Tuple
 
 import pygame
 from pynput import keyboard
@@ -37,7 +39,7 @@ def _play_binded_sound(key: int) -> None:
 
 
 class VolumeBar(tkinter.Scale):
-    volume_bar_list: list = []
+    volume_bar_list: List["VolumeBar"] = []
 
     def __init__(self, master=None):
         super().__init__(master)
@@ -59,7 +61,7 @@ class VolumeBar(tkinter.Scale):
 
 
 class LoopCheckBox(tkinter.Checkbutton):
-    loop_check_box_list: list = []
+    loop_check_box_list: List["LoopCheckBox"] = []
 
     def __init__(self, master=None):
         super().__init__(master)
@@ -89,7 +91,7 @@ class Button(tkinter.Button):
 
 
 class PadButton(Button):
-    buttons_list: list = []
+    buttons_list: List["PadButton"] = []
 
     def __init__(self, master=None, nr=None):
         super().__init__(master)
@@ -103,6 +105,8 @@ class PadButton(Button):
         self["wraplength"] = self["width"] * 10
         PadButton.buttons_list.append(self)
         # self._button_list_sort()
+        self.menu = RightClickMenu(button=self)
+        self.bind("<Button-3>", self._right_click_menu_popup)
 
     def play(self):
         logging.debug(f"PAD BUTTON pressed, id: {self.nr}")
@@ -118,9 +122,18 @@ class PadButton(Button):
     #         self.buttons_list[1], self.buttons_list[7] = self.buttons_list[7], self.buttons_list[1]
     #         self.buttons_list[2], self.buttons_list[8] = self.buttons_list[8], self.buttons_list[2]
 
+    def set_color(self, color: str):
+        self["background"] = self.color = color
+
+    def _right_click_menu_popup(self, event: tkinter.Event):
+        try:
+            self.menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu.grab_release()
+
 
 class OpenButton(Button):
-    buttons_list: list = []
+    buttons_list: List["OpenButton"] = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -155,7 +168,7 @@ class OpenButton(Button):
 
 
 class StopButton(Button):
-    buttons_list: list = []
+    buttons_list: List["StopButton"] = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -175,7 +188,7 @@ class StopButton(Button):
 
 
 class PauseButton(Button):
-    buttons_list: list = []
+    buttons_list: List["PauseButton"] = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -194,7 +207,7 @@ class PauseButton(Button):
 
 
 class PlayButton(Button):
-    buttons_list: list = []
+    buttons_list: List["PlayButton"] = []
 
     def __init__(self, frame=None):
         super().__init__(frame)
@@ -243,15 +256,25 @@ class SaveProjectButton(Button):
                     loop_checkbox.var.get()
                     for loop_checkbox in LoopCheckBox.loop_check_box_list
                 ]
+                sounds_color = [button.color for button in PadButton.buttons_list]
+                sounds_name = [button["text"] for button in PadButton.buttons_list]
 
                 sounds_state = {
                     key: {
                         "path": options[0],
                         "volume": options[1],
                         "isloop": options[2],
+                        "color": options[3],
+                        "name": options[4],
                     }
                     for key, options in enumerate(
-                        zip(sounds_path, sounds_volume, sounds_isloop)
+                        zip(
+                            sounds_path,
+                            sounds_volume,
+                            sounds_isloop,
+                            sounds_color,
+                            sounds_name,
+                        )
                     )
                 }
                 logging.debug(sounds_state)
@@ -313,9 +336,13 @@ class OpenProjectButton(Button):
 
                 for index, sound_details in settings.items():
                     index: int = int(index)
-                    path: str = sound_details["path"]
-                    volume: float = sound_details["volume"]
-                    isloop: int = sound_details["isloop"]
+                    path: str = sound_details.get("path")
+                    volume: float = sound_details.get("volume")
+                    isloop: int = sound_details.get("isloop")
+                    color: Tuple[Tuple[int], str] = sound_details.get(
+                        "color", "#D9D9D9"
+                    )
+                    name = sound_details.get("name")
 
                     if path:
                         try:
@@ -326,17 +353,24 @@ class OpenProjectButton(Button):
                                 index,
                                 OpenButton.buttons_list[index].master.master,
                             )
-                            pad_button_text = os.path.split(path)[1]
-                            PadButton.buttons_list[index].config(text=pad_button_text)
-                            VolumeBar.volume_bar_list[index].set_sound_volume(volume)
-                            VolumeBar.volume_bar_list[index].set(volume)
-                            if isloop < 0:
-                                LoopCheckBox.loop_check_box_list[index].toggle()
                         except FileNotFoundError:
                             files_not_found_list.append(path)
                             logging.exception(f"File not found: {path}")
                     else:
                         global_player.playlist[index] = NoSound()
+
+                    if name:
+                        pad_button_text = name
+                    else:
+                        pad_button_text = os.path.split(path)[1] or str(index + 1)
+
+                    PadButton.buttons_list[index].config(text=pad_button_text)
+                    PadButton.buttons_list[index].set_color(color)
+                    VolumeBar.volume_bar_list[index].set_sound_volume(volume)
+                    VolumeBar.volume_bar_list[index].set(volume)
+
+                    if isloop < 0:
+                        LoopCheckBox.loop_check_box_list[index].toggle()
 
             global_player.stop_all()
 
@@ -431,6 +465,51 @@ class FadeoutAll(Button):
 
 # Get rid of Menu classes, and put them in a AppWindow
 # To much unnecessary code
+
+
+class RightClickMenu(tkinter.Menu):
+    def __init__(self, button: PadButton):
+        tkinter.Menu.__init__(self, tearoff=0)
+        self.button = button
+        self.add_command(label="Rename", command=self.rename)
+        self.add_command(label="Change color", command=self.pick_color)
+        self.add_command(label="Open file", command=self.open_file)
+
+    def rename(self):
+        logging.info(f"RENAME from right click selected on button if={self.button.nr}")
+        new_name = tkinter.simpledialog.askstring(
+            "Rename", "Enter new name", initialvalue=self.button["text"]
+        )
+        if new_name is not None:
+            self.button.config(text=new_name)
+
+    def pick_color(self):
+        logging.info(
+            f"CHANGE COLOR from right click selected on button if={self.button.nr}"
+        )
+        color_code = colorchooser.askcolor(title="Choose color")
+        logging.debug(f"Selected color={color_code}")
+        self.button.set_color(color_code[1])
+
+    def open_file(self):
+        logging.info(
+            f"OPEN FILE from right click selected on button id={self.button.nr}"
+        )
+        initial_directory = os.path.join(PublicConfig.DEFAULT_DIRECTORY)
+        title = "Select A File"
+        file_types = [
+            ("wav files", "*.wav"),
+            ("mp3 files", "*.mp3"),
+            ("all files", "*.*"),
+        ]
+        file_path = tkinter.filedialog.askopenfilename(
+            initialdir=initial_directory, title=title, filetypes=file_types
+        )
+        if file_path:
+            global_player.playlist[self.button.nr] = Sound(file_path, self.button.nr)
+            _bind_key_to_sound(self.button.nr, self.master.master)
+            pad_button_text = os.path.split(file_path)[1]
+            self.button.config(text=pad_button_text)
 
 
 class MenuBar(tkinter.Menu):
@@ -585,9 +664,9 @@ class SettingsFrame(tkinter.Frame):
         return self.grid_forget()
 
 
-class HelpWindow(tkinter.Tk):
+class HelpWindow(tkinter.Toplevel):
     def __init__(self, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
+        tkinter.Toplevel.__init__(self, *args, **kwargs)
         self.title("Help")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(
@@ -596,9 +675,9 @@ class HelpWindow(tkinter.Tk):
         self.help_label.pack()
 
 
-class SettingsWindow(tkinter.Tk):
+class SettingsWindow(tkinter.Toplevel):
     def __init__(self, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
+        tkinter.Toplevel.__init__(self, *args, **kwargs)
         self.title("Settings")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(

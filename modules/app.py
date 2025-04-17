@@ -4,6 +4,7 @@ import os
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
+import tkinter.simpledialog
 import webbrowser
 from tkinter import colorchooser
 from typing import List, Optional, Tuple
@@ -104,7 +105,6 @@ class PadButton(Button):
         self["wraplength"] = self["width"] * 10
         PadButton.buttons_list.append(self)
         # self._button_list_sort()
-        self.set_color("#282828")
         self.menu = RightClickMenu(button=self)
         self.bind("<Button-3>", self._right_click_menu_popup)
 
@@ -340,7 +340,7 @@ class OpenProjectButton(Button):
                     volume: float = sound_details.get("volume")
                     isloop: int = sound_details.get("isloop")
                     color: Tuple[Tuple[int], str] = sound_details.get(
-                        "color", "#282828"
+                        "color", "#D9D9D9"
                     )
                     name = sound_details.get("name")
 
@@ -477,7 +477,11 @@ class RightClickMenu(tkinter.Menu):
 
     def rename(self):
         logging.info(f"RENAME from right click selected on button if={self.button.nr}")
-        RenameWindow(self.button)
+        new_name = tkinter.simpledialog.askstring(
+            "Rename", "Enter new name", initialvalue=self.button["text"]
+        )
+        if new_name is not None:
+            self.button.config(text=new_name)
 
     def pick_color(self):
         logging.info(
@@ -660,9 +664,9 @@ class SettingsFrame(tkinter.Frame):
         return self.grid_forget()
 
 
-class HelpWindow(tkinter.Tk):
+class HelpWindow(tkinter.Toplevel):
     def __init__(self, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
+        tkinter.Toplevel.__init__(self, *args, **kwargs)
         self.title("Help")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(
@@ -671,30 +675,9 @@ class HelpWindow(tkinter.Tk):
         self.help_label.pack()
 
 
-class RenameWindow(tkinter.Tk):
-    def __init__(self, button, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
-        self.title("Rename")
-        self.button = button
-        self.label = tkinter.Label(self, text="Rename button", justify=tkinter.LEFT)
-        self.save_button = tkinter.Button(self, text="Save", command=self.save)
-        width = len(self.button["text"]) if len(self.button["text"]) > 20 else 20
-        self.text = tkinter.Text(self, width=width, height=1)
-
-        self.label.pack()
-        self.text.pack()
-        self.save_button.pack()
-
-        self.text.insert(tkinter.END, self.button["text"])
-
-    def save(self):
-        self.button["text"] = self.text.get("1.0", tkinter.END)
-        self.destroy()
-
-
-class SettingsWindow(tkinter.Tk):
+class SettingsWindow(tkinter.Toplevel):
     def __init__(self, *args, **kwargs):
-        tkinter.Tk.__init__(self, *args, **kwargs)
+        tkinter.Toplevel.__init__(self, *args, **kwargs)
         self.title("Settings")
         self.resizable(width=False, height=False)
         self.help_label = tkinter.Label(
